@@ -20,6 +20,7 @@ int print_zstring(unsigned short address) {
             zchar = (unsigned char) (zword >> bitshift) & 0x1f;
             if (zscii) {
                 zsciichar = (zsciichar << 5) | zchar;
+                zscii++;
                 if (zscii++ > 2) {
                     glk_put_char((unsigned char)zsciichar);                    
                     zsciichar = 0; zscii = 0;                            
