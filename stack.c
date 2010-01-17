@@ -7,7 +7,8 @@
 #include "zerp.h"
 #include "stack.h"
 
-void dump_stack() {
+#if DEBUG > ZDEBUG
+static void dump_stack() {
     zByteAddr *s;
 
     glk_put_string("stack : ");
@@ -18,9 +19,12 @@ void dump_stack() {
         
     glk_put_string("\n");
 }
+#endif
 
 int stack_push(zByteAddr value) {
+#if DEBUG > ZDEBUG
     dump_stack();
+#endif
     *(zSP++) = value;
     if (zSP >= zStackTop) {
         glk_put_string("ABORT: Value stack overflow!\n");
@@ -29,7 +33,9 @@ int stack_push(zByteAddr value) {
 }
 
 zByteAddr stack_pop() {
+#if DEBUG > ZDEBUG
     dump_stack();
+#endif
     if (zSP == zStack) {
         return 0;
     }

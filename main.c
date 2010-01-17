@@ -56,8 +56,8 @@ void glk_main(void)
 
     if (info.st_size < 64)
     {
-        fprintf (stderr, "This is too small to be a z-code file.\n");
-        exit (1);
+        glk_put_string("This is too small to be a z-code file.\n");
+        return;
     }
 
     zGamefile = mmap (NULL, info.st_size, PROT_READ, MAP_PRIVATE, file, 0);
@@ -99,6 +99,7 @@ static void show_banner() {
     glk_printf("%s, %d bytes.\n", basename(zFilename), zFilesize);
 }
 
+#ifdef DEBUG
 int glk_printf(char *format, ...) {
     va_list ap;
     char    buf[SMALLBUFF];
@@ -111,3 +112,4 @@ int glk_printf(char *format, ...) {
     va_end(ap);
     return res;
 }
+#endif

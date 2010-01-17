@@ -7,6 +7,7 @@
 #include "zerp.h"
 #include "stack.h"
 
+#if DEBUG > ZDEBUG
 static void dump_globals() {
     int g, x, y;
     
@@ -22,6 +23,7 @@ static void dump_globals() {
     }
     glk_put_string("\n");
 }
+#endif
 
 zByteAddr variable_get(unsigned char variable) {
     if (variable == 0) {
@@ -33,8 +35,10 @@ zByteAddr variable_get(unsigned char variable) {
         return 0;
     } else {
         /* read a global */
+#if DEBUG > ZDEBUG
         glk_printf("Reading global %#x\n", variable - 0x10);
-        // dump_globals();
+        dump_globals();
+#endif
         return byte_addr(zGlobals + ((variable - 0x10) * 2));
     }
 }
@@ -49,9 +53,11 @@ int variable_set(unsigned char variable, zByteAddr value) {
         return 0;
     } else {
         /* write a global */
-        glk_printf("Writing global %#x\n", variable - 0x10);
         store_byte_addr(zGlobals + ((variable - 0x10) *2), value);
-        // dump_globals();
+#if DEBUG > ZDEBUG
+        glk_printf("Writing global %#x\n", variable - 0x10);
+        dump_globals();
+#endif
         return 1;
     }
 }

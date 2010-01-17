@@ -18,6 +18,23 @@
 #define NULL 0
 #endif
 
+/* Debugging */
+#define ZERROR          1
+#define ZWARN           2
+#define ZDEBUG          3
+#define ZCRAZY          4
+
+#define DEBUG           3
+
+#ifdef DEBUG
+#define LOG(level, fmt, ...) \
+    if (DEBUG >= level) \
+        glk_printf(fmt, __VA_ARGS__);
+#else
+#define LOG(level, fmt, ...)
+#endif
+
+
 #define SMALLBUFF 1024
 
 /* Z-machine address formats */
@@ -83,6 +100,8 @@ extern unsigned short zPC;
 
 /* function declarations */
 int zerp_run();
+#ifdef DEBUG
 int glk_printf(char *format, ...);
 
+#endif
 #endif /* ZERP_H */

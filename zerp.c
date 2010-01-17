@@ -3,6 +3,8 @@
     zerp.c : main z-machine interpreter
 */
 
+
+#include <stdio.h>
 #include <stdlib.h>
 #include "glk.h"
 #include "zerp.h"
@@ -15,16 +17,23 @@ zByteAddr * zFP = 0;
 zByteAddr zGlobals = 0;
 unsigned short zPC = 0;
 
+#ifdef DEBUG
+static char opdesc[9][16];
+static int si, opind;
+char *var_name(char *opstr, unsigned char byte);
+#endif
+
 inline static int decode_variable(unsigned char optypes, zByteAddr *operands);
 inline static int decode_short(unsigned char opbyte, zByteAddr *operands);
 inline static int decode_long(unsigned char opbyte, zByteAddr *operands);
 
 /* main interpreter entrypoint */
 int zerp_run() {
-    unsigned char op;
+    unsigned char op, store_loc;
     int opsize, opcode, opcount, var_opcount;
     zByteAddr operands[8];
-    
+
+
     /* intialise the stack and pc */
     zStack = calloc(STACKSIZE, sizeof(zByteAddr));
     if (!zStack) {
@@ -40,11 +49,16 @@ int zerp_run() {
     for (inx = 0; inx < 8; inx++)
         operands[inx] = 0;
         
-    glk_put_string("Running...\n");
+    LOG(ZDEBUG,"Running...\n", 0);
     
     int max = 15;
     while (max--) {
-        glk_printf("%#0x : ", zPC);
+        LOG(ZDEBUG,"%#0x : ", zPC);
+#ifdef DEBUG
+        for (si = 0; si < 9; si++)
+            opdesc[si][0] = 0;
+        opind = 0;
+#endif
 
         op = game_byte(zPC++);
     
@@ -64,7 +78,7 @@ int zerp_run() {
                 opcode byte.
             */
             opsize = OP_VARIABLE;
-            glk_printf("Unsupported extended opcode %x @ %#0x\n", game_byte(zPC++));
+            LOG(ZERROR, "Unsupported extended opcode %x @ %#0x\n", game_byte(zPC++));
         } else if (op >> 6 == OP_VARIABLE ) {
             /*
                 4.3.3
@@ -95,7 +109,7 @@ int zerp_run() {
             opcode = op & OPCODE_5BIT;
         }
     
-        glk_printf("byte: %#x, opcode: %#0x, opcount: %#0x, opsize: %#0x\n", op, opcode, opcount, opsize);
+        LOG(ZCRAZY, "byte: %#x, opcode: %#0x, opcount: %#0x, opsize: %#0x\n", op, opcode, opcount, opsize);
 
         switch (opsize) {
             case OP_SHORT:
@@ -109,9 +123,12 @@ int zerp_run() {
                 break;
         }
         
-        // glk_printf("operands: %#8x %#8x %#8x %#8x %#8x %#8x %#8x %#8x\n",
-        //             operands[0], operands[1], operands[2], operands[3],
-        //             operands[4], operands[5], operands[6], operands[7]);
+        LOG(ZCRAZY, "operands: %8s %8s %8s %8s %8s %8s %8s %8s\n",
+                    opdesc[0], opdesc[1], opdesc[2], opdesc[3],
+                    opdesc[4], opdesc[5], opdesc[6], opdesc[7]);
+        LOG(ZCRAZY, "operands: %#8x %#8x %#8x %#8x %#8x %#8x %#8x %#8x\n",
+                    operands[0], operands[1], operands[2], operands[3],
+                    operands[4], operands[5], operands[6], operands[7]);
 
         switch (opcount) {
             case COUNT_2OP:
@@ -141,7 +158,7 @@ int zerp_run() {
                     case CLEAR_ATTR:
                     break;
                     case STORE:
-                    glk_printf("@store   %#x -> %#x\n", operands[1], operands[0]);
+                    LOG(ZDEBUG, "@store   %#s, %#s\n", opdesc[0], opdesc[1]);
                     variable_set(operands[0], operands[1]);
                     break;
                     case INSERT_OBJ:
@@ -157,7 +174,8 @@ int zerp_run() {
                     case GET_NEXT_PROP:
                     break;
                     case ADD:
-                    glk_printf("@add %#x + %#x -> %#x\n", operands[0], operands[1], game_byte(zPC++));
+                    store_loc = game_byte(zPC++);
+                    LOG(ZDEBUG, "@add %#s + %#s -> %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[9], store_loc));
                     break;
                     case SUB:
                     break;
@@ -200,7 +218,8 @@ int zerp_run() {
                     case LOAD:
                     break;
                     case NOT:
-                    glk_printf("@not %#x -> %#x\n", operands[0], game_byte(zPC++));
+                    store_loc = game_byte(zPC++);
+                    LOG(ZDEBUG, "@not %#s -> %#s\n", opdesc[0], var_name((char *)&opdesc[9], store_loc));
                     break;
                 }
                 break;
@@ -211,9 +230,9 @@ int zerp_run() {
                     case RFALSE:
                     break;
                     case PRINT:
-                    glk_put_string("@print \"");
+                    LOG(ZDEBUG, "@print \"", 0);
                     zPC += print_zstring(zPC);
-                    glk_put_string("\"\n");
+                    LOG(ZDEBUG, "\"\n", 0);
                     break;
                     case PRINT_RET:
                     break;
@@ -226,18 +245,18 @@ int zerp_run() {
                     case RESTART:
                     break;
                     case RET_POPPED:
-                    glk_put_string("@ret_popped\n");
+                    LOG(ZDEBUG, "@ret_popped\n", 0);
                     break;
                     case POP:
                     break;
                     case QUIT:
                     break;
                     case NEW_LINE:
-                    glk_printf("@new_line\n");
+                    LOG(ZDEBUG, "@new_line\n", 0);
                     glk_put_string("\n");
                     break;
                     case SHOW_STATUS:
-                    glk_printf("@show_status\n");
+                    LOG(ZDEBUG, "@show_status\n", 0);
                     break;
                     case VERIFY:
                     break;
@@ -247,16 +266,17 @@ int zerp_run() {
                 switch (opcode) {
                     int i;
                     case CALL:
-                    glk_printf("@call %#x (", unpack(operands[0]));
+                    store_loc = game_byte(zPC++);
+                    LOG(ZDEBUG, "@call %#x (", unpack(operands[0]));
                     for (i = 1; i < var_opcount; i++) {
-                        glk_printf("%#x ", operands[i]);
+                        LOG(ZDEBUG, "%#s ", opdesc[i]);
                     }
-                    glk_printf(") -> %#x\n", game_byte(zPC++));
+                    LOG(ZDEBUG, ") -> %#s\n", var_name((char *)&opdesc[9], store_loc));
                     /* phony return value */
                     stack_push(0);
                     break;
                     case STOREW:
-                    glk_put_string("@storew\n");
+                    LOG(ZDEBUG, "@storew %#s->%#s -> %#s \n", opdesc[0], opdesc[1], opdesc[2]);
                     break;
                     case STOREB:
                     break;
@@ -285,7 +305,8 @@ int zerp_run() {
                 }
                 break;
             default:
-                glk_put_string("Unknown opcode error");
+                LOG(ZERROR, "Unknown opcode: %#x", op);
+                glk_put_string("ABORT: Unknown Z-machine opcode.");
         }
     }
 }
@@ -307,12 +328,21 @@ inline static int decode_variable(unsigned char optypes, zByteAddr *operands) {
             case LARGE_CONST:
                 *operands++ = byte_addr(zPC++);
                 zPC++;
+#ifdef DEBUG
+                snprintf((char *)&opdesc[opind++], 16, "%#8x", byte_addr(zPC - 2));
+#endif
                 break;
             case SMALL_CONST:
                 *operands++ = (zByteAddr) game_byte(zPC++);
+#ifdef DEBUG
+                snprintf((char *)&opdesc[opind++], 16, "%#8x", game_byte(zPC - 1));
+#endif
                 break;
             case VARIABLE:
                 *operands++ = variable_get(game_byte(zPC++));
+#ifdef DEBUG
+                var_name((char *)&opdesc[opind++], game_byte(zPC - 1));
+#endif
                 break;
         }
         shift = shift -2; opcount++;
@@ -331,12 +361,21 @@ inline static int decode_short(unsigned char opbyte, zByteAddr *operands) {
         case LARGE_CONST:
             *operands = byte_addr(zPC++);
             zPC++;
+#ifdef DEBUG
+            snprintf((char *)&opdesc[opind++], 16, "%#8x", byte_addr(zPC - 2));
+#endif
             break;
         case SMALL_CONST:
             *operands = (zByteAddr) game_byte(zPC++);
+#ifdef DEBUG
+            snprintf((char *)&opdesc[opind++], 16, "%#8x", game_byte(zPC - 1));
+#endif
             break;
         case VARIABLE:
             *operands = variable_get(game_byte(zPC++));
+#ifdef DEBUG
+            var_name((char *)&opdesc[opind++], game_byte(zPC - 1));
+#endif
             break;
     }
     
@@ -357,10 +396,29 @@ inline static int decode_long(unsigned char opbyte, zByteAddr *operands) {
     for (bit = 6; bit > 4; bit--) {
         if ((opbyte >> bit) & 0x1) {
             *operands++ = variable_get(game_byte(zPC++));
+#ifdef DEBUG
+            var_name((char *)&opdesc[opind++], game_byte(zPC - 1));
+#endif
         } else {
             *operands++ = (zByteAddr) game_byte(zPC++);
+#ifdef DEBUG
+            snprintf((char *)&opdesc[opind++], 16, "%#8x", game_byte(zPC - 1));
+#endif
         }
     }
     
     return 2;
 }
+
+#ifdef DEBUG
+char *var_name(char *opstr, unsigned char byte) {
+    if (byte == 0) {
+        snprintf(opstr, 16, "SP");
+    } else if (byte < 0x10) {
+        snprintf(opstr, 16, "   L%#2x", byte);
+    } else {
+        snprintf(opstr, 16, "   G%#2x", byte - 0x10);
+    }
+    return opstr;
+}
+#endif
