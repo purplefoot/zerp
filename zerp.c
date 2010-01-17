@@ -18,7 +18,7 @@ zByteAddr zGlobals = 0;
 unsigned short zPC = 0;
 
 #ifdef DEBUG
-static char opdesc[9][16];
+static char opdesc[10][16];
 static int si, opind;
 char *var_name(char *opstr, unsigned char byte);
 #endif
@@ -29,7 +29,7 @@ inline static int decode_long(unsigned char opbyte, zByteAddr *operands);
 
 /* main interpreter entrypoint */
 int zerp_run() {
-    unsigned char op, store_loc;
+    unsigned char op, store_loc, branch, branch_long;
     int opsize, opcode, opcount, var_opcount;
     zByteAddr operands[8];
 
@@ -51,7 +51,7 @@ int zerp_run() {
         
     LOG(ZDEBUG,"Running...\n", 0);
     
-    int max = 15;
+    int max = 26;
     while (max--) {
         LOG(ZDEBUG,"%#0x : ", zPC);
 #ifdef DEBUG
@@ -113,13 +113,13 @@ int zerp_run() {
 
         switch (opsize) {
             case OP_SHORT:
-                var_opcount = decode_short(op, &operands);
+                var_opcount = decode_short(op, (zByteAddr *)&operands);
                 break;
             case OP_LONG:
-                var_opcount = decode_long(op, &operands);
+                var_opcount = decode_long(op, (zByteAddr *)&operands);
                 break;
             case OP_VARIABLE:
-                var_opcount = decode_variable(game_byte(zPC++), &operands);
+                var_opcount = decode_variable(game_byte(zPC++), (zByteAddr *)&operands);
                 break;
         }
         
@@ -134,100 +134,190 @@ int zerp_run() {
             case COUNT_2OP:
                 switch (opcode) {
                     case JE:
+                    branch = game_byte(zPC++);
+                    if (!(branch >> 6 & 1))
+                        branch_long = game_byte(zPC++);
+                    LOG(ZDEBUG, "@je %#s : %#s  %#s %#s, %#s\n", opdesc[0], opdesc[1], opdesc[2], opdesc[3], var_name((char *)&opdesc[9], branch));
                     break;
                     case JL:
+                    branch = game_byte(zPC++);
+                    if (!(branch >> 6 & 1))
+                        branch_long = game_byte(zPC++);
+                    LOG(ZDEBUG, "@jl %#s < %#s, %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[9], branch));
                     break;
                     case JG:
+                    branch = game_byte(zPC++);
+                    if (!(branch >> 6 & 1))
+                        branch_long = game_byte(zPC++);
+                    LOG(ZDEBUG, "@jg %#s > %#s, %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[9], branch));
                     break;
                     case DEC_CHK:
+                    branch = game_byte(zPC++);
+                    if (!(branch >> 6 & 1))
+                        branch_long = game_byte(zPC++);
+                    LOG(ZDEBUG, "@dec_check %#s, %#s, %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[9], branch));
                     break;
                     case INC_CHK:
+                    branch = game_byte(zPC++);
+                    if (!(branch >> 6 & 1))
+                        branch_long = game_byte(zPC++);
+                    LOG(ZDEBUG, "@inc_check %#s, %#s, %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[9], branch));
                     break;
                     case JIN:
+                    branch = game_byte(zPC++);
+                    if (!(branch >> 6 & 1))
+                        branch_long = game_byte(zPC++);
+                    LOG(ZDEBUG, "@jin %#s in %#s, %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[9], branch));
                     break;
                     case TEST:
+                    branch = game_byte(zPC++);
+                    if (!(branch >> 6 & 1))
+                        branch_long = game_byte(zPC++);
+                    LOG(ZDEBUG, "@test %#s, %#s, %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[9], branch));
                     break;
                     case OR:
+                    store_loc = game_byte(zPC++);
+                    LOG(ZDEBUG, "@or %#s | %#s -> %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
                     break;
                     case AND:
+                    store_loc = game_byte(zPC++);
+                    LOG(ZDEBUG, "@and %#s & %#s -> %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
                     break;
                     case TEST_ATTR:
+                    branch = game_byte(zPC++);
+                    if (!(branch >> 6 & 1))
+                        branch_long = game_byte(zPC++);
+                    LOG(ZDEBUG, "@test_attr %#s, %#s, %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[9], branch));
                     break;
                     case SET_ATTR:
+                    LOG(ZDEBUG, "@set_attr %#s, %#s\n", opdesc[0], opdesc[1]);
                     break;
                     case CLEAR_ATTR:
+                    LOG(ZDEBUG, "@clear_attr %#s, %#s\n", opdesc[0], opdesc[1]);
                     break;
                     case STORE:
-                    LOG(ZDEBUG, "@store   %#s, %#s\n", opdesc[0], opdesc[1]);
+                    LOG(ZDEBUG, "@store   %#s, %#s\n", var_name((char *)&opdesc[0], operands[0]), opdesc[1]);
                     variable_set(operands[0], operands[1]);
                     break;
                     case INSERT_OBJ:
+                    LOG(ZDEBUG, "@insert_obj %#s, %#s\n", opdesc[0], opdesc[1]);
                     break;
                     case LOADW:
+                    store_loc = game_byte(zPC++);
+                    LOG(ZDEBUG, "@loadw %#s->%#s -> %#s \n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
                     break;
                     case LOADB:
+                    store_loc = game_byte(zPC++);
+                    LOG(ZDEBUG, "@loadb %#s->%#s -> %#s \n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
                     break;
                     case GET_PROP:
+                    store_loc = game_byte(zPC++);
+                    LOG(ZDEBUG, "@get_prop %#s,%#s -> %#s \n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
                     break;
                     case GET_PROP_ADDR:
+                    store_loc = game_byte(zPC++);
+                    LOG(ZDEBUG, "@get_prop_addr %#s,%#s -> %#s \n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
                     break;
                     case GET_NEXT_PROP:
+                    store_loc = game_byte(zPC++);
+                    LOG(ZDEBUG, "@get_next_prop %#s,%#s -> %#s \n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
                     break;
                     case ADD:
                     store_loc = game_byte(zPC++);
-                    LOG(ZDEBUG, "@add %#s + %#s -> %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[9], store_loc));
+                    LOG(ZDEBUG, "@add %#s + %#s -> %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
                     break;
                     case SUB:
+                    store_loc = game_byte(zPC++);
+                    LOG(ZDEBUG, "@sub %#s - %#s -> %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
                     break;
                     case MUL:
+                    store_loc = game_byte(zPC++);
+                    LOG(ZDEBUG, "@mul %#s * %#s -> %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
                     break;
                     case DIV:
+                    store_loc = game_byte(zPC++);
+                    LOG(ZDEBUG, "@div %#s / %#s -> %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
                     break;
                     case MOD:
+                    store_loc = game_byte(zPC++);
+                    LOG(ZDEBUG, "@mod %#s %% %#s -> %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
                     break;
                 }
                 break;
             case COUNT_1OP:
                 switch (opcode) {
                     case JZ:
+                    branch = game_byte(zPC++);
+                    if (!(branch >> 6 & 1))
+                        branch_long = game_byte(zPC++);
+                    LOG(ZDEBUG, "@jz %#s, %#s\n", opdesc[0], var_name((char *)&opdesc[9], branch));
                     break;
                     case GET_SIBLING:
+                    store_loc = game_byte(zPC++);
+                    branch = game_byte(zPC++);
+                    if (!(branch >> 6 & 1))
+                        branch_long = game_byte(zPC++);
+                    LOG(ZDEBUG, "@get_sibling %#s -> %#s, %#s\n", opdesc[0], var_name((char *)&opdesc[8], store_loc),
+                                                                             var_name((char *)&opdesc[9], branch));
                     break;
                     case GET_CHILD:
+                    store_loc = game_byte(zPC++);
+                    branch = game_byte(zPC++);
+                    if (!(branch >> 6 & 1))
+                        branch_long = game_byte(zPC++);
+                    LOG(ZDEBUG, "@get_child %#s -> %#s, %#s\n", opdesc[0], var_name((char *)&opdesc[8], store_loc),
+                                                                             var_name((char *)&opdesc[9], branch));
+
                     break;
                     case GET_PARENT:
+                    store_loc = game_byte(zPC++);
+                    LOG(ZDEBUG, "@get_parent %#s -> %#s\n", opdesc[0], var_name((char *)&opdesc[8], store_loc));
                     break;
                     case GET_PROP_LEN:
+                    store_loc = game_byte(zPC++);
+                    LOG(ZDEBUG, "@get_prop_len %#s -> %#s\n", opdesc[0], var_name((char *)&opdesc[8], store_loc));
                     break;
                     case INC:
+                    LOG(ZDEBUG, "@inc %#s \n", opdesc[0]);
                     break;
                     case DEC:
+                    LOG(ZDEBUG, "@dec %#s \n", opdesc[0]);
                     break;
                     case PRINT_ADDR:
+                    LOG(ZDEBUG, "@print_addr %#s \n", opdesc[0]);
                     break;
                     case REMOVE_OBJ:
+                    LOG(ZDEBUG, "@remove_obj %#s \n", opdesc[0]);
                     break;
                     case PRINT_OBJ:
+                    LOG(ZDEBUG, "@print_obj %#s \n", opdesc[0]);
                     break;
                     case RET:
+                    LOG(ZDEBUG, "@ret %#s \n", opdesc[0]);
                     break;
                     case JUMP:
+                    LOG(ZDEBUG, "@jump %#s \n", opdesc[0]);
                     break;
                     case PRINT_PADDR:
+                    LOG(ZDEBUG, "@print_paddr %#s \n", opdesc[0]);
                     break;
                     case LOAD:
+                    store_loc = game_byte(zPC++);
+                    LOG(ZDEBUG, "@load %#s -> %#s\n", opdesc[0], var_name((char *)&opdesc[8], store_loc));
                     break;
                     case NOT:
                     store_loc = game_byte(zPC++);
-                    LOG(ZDEBUG, "@not %#s -> %#s\n", opdesc[0], var_name((char *)&opdesc[9], store_loc));
+                    LOG(ZDEBUG, "@not !%#s -> %#s\n", opdesc[0], var_name((char *)&opdesc[8], store_loc));
                     break;
                 }
                 break;
             case COUNT_0OP:
                 switch (opcode) {
                     case RTRUE:
+                    LOG(ZDEBUG, "@rtrue\n", 0);
                     break;
                     case RFALSE:
+                    LOG(ZDEBUG, "@rfalse\n", 0);
                     break;
                     case PRINT:
                     LOG(ZDEBUG, "@print \"", 0);
@@ -235,21 +325,37 @@ int zerp_run() {
                     LOG(ZDEBUG, "\"\n", 0);
                     break;
                     case PRINT_RET:
+                    LOG(ZDEBUG, "@print_ret \"", 0);
+                    zPC += print_zstring(zPC);
+                    LOG(ZDEBUG, "\"\n", 0);
+                    glk_put_string("\n");
                     break;
                     case NOP:
+                    LOG(ZDEBUG, "@nop\n", 0);
                     break;
                     case SAVE:
+                    branch = game_byte(zPC++);
+                    if (!(branch >> 6 & 1))
+                        branch_long = game_byte(zPC++);
+                    LOG(ZDEBUG, "@save, %#s\n", var_name((char *)&opdesc[9], branch));
                     break;
                     case RESTORE:
+                    branch = game_byte(zPC++);
+                    if (!(branch >> 6 & 1))
+                        branch_long = game_byte(zPC++);
+                    LOG(ZDEBUG, "@restore, %#s\n", var_name((char *)&opdesc[9], branch));
                     break;
                     case RESTART:
+                    LOG(ZDEBUG, "@restart\n", 0);
                     break;
                     case RET_POPPED:
                     LOG(ZDEBUG, "@ret_popped\n", 0);
                     break;
                     case POP:
+                    LOG(ZDEBUG, "@pop\n", 0);
                     break;
                     case QUIT:
+                    LOG(ZDEBUG, "@quit\n", 0);
                     break;
                     case NEW_LINE:
                     LOG(ZDEBUG, "@new_line\n", 0);
@@ -259,6 +365,10 @@ int zerp_run() {
                     LOG(ZDEBUG, "@show_status\n", 0);
                     break;
                     case VERIFY:
+                    branch = game_byte(zPC++);
+                    if (!(branch >> 6 & 1))
+                        branch_long = game_byte(zPC++);
+                    LOG(ZDEBUG, "@verify, %#s\n", var_name((char *)&opdesc[9], branch));
                     break;
                 }
                 break;
@@ -271,7 +381,7 @@ int zerp_run() {
                     for (i = 1; i < var_opcount; i++) {
                         LOG(ZDEBUG, "%#s ", opdesc[i]);
                     }
-                    LOG(ZDEBUG, ") -> %#s\n", var_name((char *)&opdesc[9], store_loc));
+                    LOG(ZDEBUG, ") -> %#s\n", var_name((char *)&opdesc[8], store_loc));
                     /* phony return value */
                     stack_push(0);
                     break;
@@ -279,28 +389,43 @@ int zerp_run() {
                     LOG(ZDEBUG, "@storew %#s->%#s -> %#s \n", opdesc[0], opdesc[1], opdesc[2]);
                     break;
                     case STOREB:
+                    LOG(ZDEBUG, "@storeb %#s->%#s -> %#s \n", opdesc[0], opdesc[1], opdesc[2]);
                     break;
                     case PUT_PROP:
+                    LOG(ZDEBUG, "@put_prop %#s %#s -> %#s \n", opdesc[0], opdesc[1], opdesc[2]);
                     break;
                     case SREAD:
+                    LOG(ZDEBUG, "@sread %#s %#s\n", opdesc[0], opdesc[1]);
                     break;
                     case PRINT_CHAR:
+                    LOG(ZDEBUG, "@print_char %#s\n", opdesc[0]);
                     break;
                     case PRINT_NUM:
+                    LOG(ZDEBUG, "@print_num %#s\n", opdesc[0]);
                     break;
+                    case RANDOM:
+                    store_loc = game_byte(zPC++);
+                    LOG(ZDEBUG, "@random %#s -> %#s\n", opdesc[0], var_name((char *)&opdesc[8], store_loc));
                     case PUSH:
+                    LOG(ZDEBUG, "@push %#s -> SP\n", opdesc[0]);
                     break;
                     case PULL:
+                    LOG(ZDEBUG, "@pull SP -> %#s\n", opdesc[0]);
                     break;
                     case SPLIT_WINDOW:
+                    LOG(ZDEBUG, "@split_window %#s\n", opdesc[0]);
                     break;
                     case SET_WINDOW:
+                    LOG(ZDEBUG, "@set_window %#s\n", opdesc[0]);
                     break;
                     case OUTPUT_STREAM:
+                    LOG(ZDEBUG, "@output_stream %#s\n", opdesc[0]);
                     break;
                     case INPUT_STREAM:
+                    LOG(ZDEBUG, "@input_stream %#s\n", opdesc[0]);
                     break;
                     case SOUND_EFFECT:
+                    LOG(ZDEBUG, "@sound_effect %#s\n", opdesc[0]);
                     break;
                 }
                 break;

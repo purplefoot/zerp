@@ -88,7 +88,8 @@
 #define PUT_PROP            0x03     
 #define SREAD               0x04     
 #define PRINT_CHAR          0x05     
-#define PRINT_NUM           0x06     
+#define PRINT_NUM           0x06
+#define RANDOM              0x07
 #define PUSH                0x08     
 #define PULL                0x09     
 #define SPLIT_WINDOW        0x0a     
