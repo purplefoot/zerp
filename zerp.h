@@ -40,6 +40,7 @@ extern unsigned char * zMachine;
 /* z-machine stack */
 extern zByteAddr * zStack;
 extern zByteAddr * zSP;
+extern zByteAddr * zStackTop;
 extern zByteAddr * zFP;
 extern zByteAddr zGlobals;
 #define STACKSIZE 8192

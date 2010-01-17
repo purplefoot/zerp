@@ -6,3 +6,4 @@ glkterm/Make.glkterm
 test/*.z*
 ztools/*
 .DS_Store
+*.tmproj

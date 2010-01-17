@@ -10,6 +10,7 @@
 
 zByteAddr * zStack = 0;
 zByteAddr * zSP = 0;
+zByteAddr * zStackTop = 0;
 zByteAddr * zFP = 0;
 zByteAddr zGlobals = 0;
 unsigned short zPC = 0;
@@ -30,6 +31,8 @@ int zerp_run() {
         glk_put_string("Failed to allocate stack space!\n");
         return;
     }
+    zStackTop = zStack + STACKSIZE;
+    
     zSP = zStack; zFP = zSP;
     zPC = byte_addr(PC_INITIAL);
     zGlobals = byte_addr(GLOBALS);
@@ -39,7 +42,7 @@ int zerp_run() {
         
     glk_put_string("Running...\n");
     
-    int max = 6;
+    int max = 15;
     while (max--) {
         glk_printf("%#0x : ", zPC);
 
@@ -249,8 +252,11 @@ int zerp_run() {
                         glk_printf("%#x ", operands[i]);
                     }
                     glk_printf(") -> %#x\n", game_byte(zPC++));
+                    /* phony return value */
+                    stack_push(0);
                     break;
                     case STOREW:
+                    glk_put_string("@storew\n");
                     break;
                     case STOREB:
                     break;

@@ -5,6 +5,7 @@
 
 #include "glk.h"
 #include "zerp.h"
+#include "stack.h"
 
 static void dump_globals() {
     int g, x, y;
@@ -25,8 +26,7 @@ static void dump_globals() {
 zByteAddr variable_get(unsigned char variable) {
     if (variable == 0) {
         /* pop stack */
-        glk_printf("Pop stack\n");
-        return 0;
+        return stack_pop();
     } else if (variable > 0 && variable < 0x10) {
         /* read a local */
         glk_printf("Reading local %#x\n", variable);
@@ -42,8 +42,7 @@ zByteAddr variable_get(unsigned char variable) {
 int variable_set(unsigned char variable, zByteAddr value) {
     if (variable == 0) {
         /* push stack */
-        glk_printf("Push stack\n");
-        return 0;
+        return stack_push(value);
     } else if (variable > 0 && variable < 0x10) {
         /* write a local */
         glk_printf("Writing local %#x\n", variable);
