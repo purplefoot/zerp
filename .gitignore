@@ -1,0 +1,8 @@
+zerp
+*.o
+glkterm/*.a
+glkterm/*.o
+glkterm/Make.glkterm
+test/*.z*
+ztools/*
+.DS_Store
