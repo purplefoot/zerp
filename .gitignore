@@ -7,6 +7,8 @@ cheapglk/*.a
 cheapglk/*.o
 cheapglk/Make.cheapglk
 test/*.z*
+test/czech_0_8/*
+test/etude/*
 ztools/*
 .DS_Store
 *.tmproj
