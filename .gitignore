@@ -3,6 +3,9 @@ zerp
 glkterm/*.a
 glkterm/*.o
 glkterm/Make.glkterm
+cheapglk/*.a
+cheapglk/*.o
+cheapglk/Make.cheapglk
 test/*.z*
 ztools/*
 .DS_Store

@@ -1,13 +1,19 @@
-GLKINCLUDEDIR = ./glkterm
-GLKLIBDIR = $(GLKINCLUDEDIR)
-
-LINKLIBS = -lncurses -lglkterm
-
 OPTIONS = -g
 
-CFLAGS = $(OPTIONS) -I$(GLKINCLUDEDIR)
+GLKDIR = ./glkterm
+CGLKDIR = ./cheapglk
 
-LIBS = -L$(GLKLIBDIR) $(GLKLIB) $(LINKLIBS) 
+CFLAGS = $(OPTIONS) $(GLKINCLUDE)
+
+ifeq ($($@),czerp)
+	CFLAGS = $(OPTIONS) $(CGLKINCLUDE)
+endif
+
+GLKINCLUDE = -I./glkterm
+CGLKINCLUDE = -I$(CGLKDIR)
+
+LIBS = -L$(GLKDIR) -lncurses -lglkterm
+CLIBS = -L$(CGLKDIR) -lcheapglk
 
 HEADERS = glkstart.h zerp.h opcodes.h variables.h zscii.h stack.h
 
@@ -18,7 +24,10 @@ OBJS = glkstart.o main.o zerp.o variables.o zscii.o stack.o
 all: zerp
 
 zerp: $(OBJS)
-	$(CC) $(OPTIONS) -o zerp $(OBJS) $(LIBS)
+	$(CC) $(OPTIONS)  -I./glkterm -o zerp $(OBJS) $(LIBS)
+
+czerp: $(OBJS)
+	$(CC) $(OPTIONS) $(CGLKINCLUDE) -o zerp $(OBJS) $(CLIBS)
 
 clean:
 	rm -f *~ *.o zerp
