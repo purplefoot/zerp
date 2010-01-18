@@ -6,7 +6,7 @@
 #ifndef STACK_H
 #define STACK_H
 
-int stack_push(zByteAddr value);
-zByteAddr stack_pop();
+int stack_push(zword_t value);
+zword_t stack_pop();
 
 #endif STACK_H

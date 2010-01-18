@@ -75,8 +75,8 @@ void glk_main(void)
     memcpy(zMachine, zGamefile, zFilesize);    
     
     show_banner();
-    if (game_byte(0) != Z_VERSION_3) {
-        glk_printf("Unsupported version: this file needs version %d.", game_byte(0));
+    if (get_byte(0) != Z_VERSION_3) {
+        glk_printf("Unsupported version: this file needs version %d.", get_word(0));
         return;
     }
     zerp_run();

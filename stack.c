@@ -9,7 +9,7 @@
 
 #if DEBUG > ZDEBUG
 static void dump_stack() {
-    zByteAddr *s;
+    zword_t *s;
 
     glk_put_string("stack : ");
     
@@ -21,7 +21,7 @@ static void dump_stack() {
 }
 #endif
 
-int stack_push(zByteAddr value) {
+int stack_push(zword_t value) {
 #if DEBUG > ZDEBUG
     dump_stack();
 #endif
@@ -32,7 +32,7 @@ int stack_push(zByteAddr value) {
     }
 }
 
-zByteAddr stack_pop() {
+zword_t stack_pop() {
 #if DEBUG > ZDEBUG
     dump_stack();
 #endif

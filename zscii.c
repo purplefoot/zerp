@@ -10,12 +10,12 @@
 
 int print_zstring(unsigned short address) {
     int words = 0, alpha = 0, zscii = 0, zsciichar = 0, bitshift, abbrv_index;
-    zByteAddr zword;
+    zword_t zword;
     unsigned char zchar, abbriv = 0;
     
     int max = 5;
     while(1) {
-        zword = byte_addr(address);
+        zword = get_word(address);
         for (bitshift = 10; bitshift >= 0; bitshift = bitshift - 5) {
             zchar = (unsigned char) (zword >> bitshift) & 0x1f;
             if (zscii) {
@@ -27,7 +27,7 @@ int print_zstring(unsigned short address) {
                 }
             } else if (abbriv) {
                 abbrv_index = (32 * (abbriv - 1) + zchar);
-                print_zstring(byte_addr(byte_addr(ABBRV) + (abbrv_index * 2)) * 2);
+                print_zstring(get_word(get_word(ABBRV) + (abbrv_index * 2)) * 2);
                 abbriv = 0;
             } else {
                 switch (zchar) {

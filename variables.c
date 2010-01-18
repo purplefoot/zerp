@@ -19,13 +19,13 @@ static void dump_globals() {
     for (g = 0; g < 240; g++) {
         if (!(g % 16))
             glk_printf("\n%8x", g);
-        glk_printf("%8x", byte_addr(zGlobals + ((g) * 2)));
+        glk_printf("%8x", get_word(zGlobals + ((g) * 2)));
     }
     glk_put_string("\n");
 }
 #endif
 
-zByteAddr variable_get(unsigned char variable) {
+zword_t variable_get(unsigned char variable) {
     if (variable == 0) {
         /* pop stack */
         return stack_pop();
@@ -39,11 +39,11 @@ zByteAddr variable_get(unsigned char variable) {
         glk_printf("Reading global %#x\n", variable - 0x10);
         dump_globals();
 #endif
-        return byte_addr(zGlobals + ((variable - 0x10) * 2));
+        return get_word(zGlobals + ((variable - 0x10) * 2));
     }
 }
 
-int variable_set(unsigned char variable, zByteAddr value) {
+int variable_set(unsigned char variable, zword_t value) {
     if (variable == 0) {
         /* push stack */
         return stack_push(value);
@@ -53,7 +53,7 @@ int variable_set(unsigned char variable, zByteAddr value) {
         return 0;
     } else {
         /* write a global */
-        store_byte_addr(zGlobals + ((variable - 0x10) *2), value);
+        store_word(zGlobals + ((variable - 0x10) *2), value);
 #if DEBUG > ZDEBUG
         glk_printf("Writing global %#x\n", variable - 0x10);
         dump_globals();

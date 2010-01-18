@@ -38,14 +38,16 @@
 #define SMALLBUFF 1024
 
 /* Z-machine address formats */
-typedef unsigned short zByteAddr;
-#define game_byte(offset) *(zMachine + offset)
-#define store_game_byte(offset, value) game_byte(offset) = (unsigned char) value;
-#define game_loc(offset) (zMachine + offset)
-#define byte_addr(addr) (((zByteAddr) game_byte(addr)) << 8 | game_byte(addr + 1))
-#define store_byte_addr(offset, value) store_game_byte(offset, value >> 8); store_game_byte(offset + 1,value & 0xff);
-#define word_addr(addr) byte_addr(addr) >> 1
-#define packed_addr(addr) byte_addr(addr) << 1
+typedef unsigned short zword_t;
+typedef unsigned char zbyte_t;
+#define get_byte(offset) *(zMachine + offset)
+#define store_byte(offset, value) get_byte(offset) = (unsigned char) value;
+#define get_word(addr) (((zword_t) get_byte(addr)) << 8 | get_byte(addr + 1))
+#define store_word(offset, value) store_byte(offset, value >> 8); store_byte(offset + 1,value & 0xff);
+#define get_word_addr(addr) get_word(addr) >> 1
+#define store_word_addr(addr) store_word(addr << 1)
+#define get_packed_addr(addr) get_word(addr) << 1
+#define store_packed_addr(addr) store_word(addr >> 1)
 #define unpack(addr) addr << 1
 
 /* game file */
@@ -55,11 +57,11 @@ extern unsigned char * zGamefile;
 extern unsigned char * zMachine;
 
 /* z-machine stack */
-extern zByteAddr * zStack;
-extern zByteAddr * zSP;
-extern zByteAddr * zStackTop;
-extern zByteAddr * zFP;
-extern zByteAddr zGlobals;
+extern zword_t * zStack;
+extern zword_t * zSP;
+extern zword_t * zStackTop;
+extern zword_t * zFP;
+extern zword_t zGlobals;
 #define STACKSIZE 8192
 extern unsigned short zPC;
 
