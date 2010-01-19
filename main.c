@@ -27,8 +27,8 @@ unsigned char * zGamefile;
 unsigned char * zMachine;
 
 /* The story and status windows. */
-static winid_t mainwin = NULL;
-static winid_t statuswin = NULL;
+winid_t mainwin = NULL;
+winid_t statuswin = NULL;
 
 void glk_main(void)
 {
@@ -92,12 +92,12 @@ void glk_main(void)
 }
 
 static void show_banner() {
-    glk_put_string("Z E R P\nA Z-machine interpreter using GLK\n");
+    glk_put_string("zerp\nA Z-machine interpreter using GLK\n");
     glk_put_string("By Ian Webb\n");
   
     glk_put_string("Gamefile loaded: ");
     
-    glk_printf("%s, %d bytes.\n", basename(zFilename), zFilesize);
+    glk_printf("%s, %d bytes.\n\n\n", basename(zFilename), zFilesize);
 }
 
 int glk_printf(char *format, ...) {
@@ -114,7 +114,7 @@ int glk_printf(char *format, ...) {
 }
 
 void fatal_error(char *message) {
-    glk_printf("FATAL ERROR: %#04x : %s\n", zPC, message);
+    glk_printf("\nFATAL ERROR: %#04x : %s\n", zPC, message);
     
     /* free any space we might have alloc'd */
     if (zStack)

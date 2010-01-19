@@ -24,7 +24,7 @@
 #define ZDEBUG          3
 #define ZCRAZY          4
 
-#define DEBUG           3
+#define DEBUG           1
 
 #ifdef DEBUG
 #define LOG(level, fmt, ...) \
@@ -120,6 +120,10 @@ extern packed_addr_t zPC;
 int zerp_run();
 void fatal_error(char *message);
 int glk_printf(char *format, ...);
+
+/* The story and status windows. */
+extern winid_t mainwin;
+extern winid_t statuswin;
 
 /* Some large macros to keep opcode stuff in line in the main loop */
 #define branch_op(debug_string, test) LOG(ZDEBUG, debug_string, opdesc[0], opdesc[1], opdesc[2], opdesc[3]); \

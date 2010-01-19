@@ -7,39 +7,21 @@
 #include "zerp.h"
 #include "stack.h"
 
-#if DEBUG > ZDEBUG
-static void dump_stack() {
-    zword_t *s;
-
-    glk_put_string("stack : ");
-    
-    s = zSP;
-    while(--s >= zStack)
-        glk_printf("%8x", *s);
-        
-    glk_put_string("\n");
-}
-#endif
-
 int stack_push(zword_t value) {
-#if DEBUG > ZDEBUG
-    dump_stack();
-#endif
-    return *(zSP++) = value;
     if (zSP >= zStackTop) {
         fatal_error("Value stack overflow!\n");
     }
+    *(zSP++) = value;
+    return value;
 }
 
 zword_t stack_pop() {
-#if DEBUG > ZDEBUG
-    dump_stack();
-#endif
+    zword_t value;
     if (zSP == zFP->sp) {
-        // BUG: throw an error here (once all stack ops are working)
-        return 0;
+        fatal_error("Value stack underflow!\n");
     }
-    return *(--zSP);
+    value =  *(--zSP);
+    return value;
 }
 
 zstack_frame_t * call_zroutine(packed_addr_t address, zword_t *operands, int opcount, zbyte_t ret_value){
@@ -78,7 +60,9 @@ zstack_frame_t *return_zroutine(zword_t ret_value) {
     zSP = zFP->sp;
     zPC = zFP->pc;
     
+    zFP--;
+    
     variable_set(zFP->ret_value, ret_value);
     
-    return zFP--;
+    return zFP;
 }

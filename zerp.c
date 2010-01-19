@@ -9,6 +9,7 @@
 #include "zerp.h"
 #include "opcodes.h"
 #include "stack.h"
+#include "debug.h"
 
 zword_t * zStack = 0;
 zword_t * zSP = 0;
@@ -61,7 +62,9 @@ int zerp_run() {
     running = TRUE;
     
     while (running) {
-        LOG(ZDEBUG,"%#07x : ", zPC);
+        // debug_monitor();
+        
+        LOG(ZDEBUG,"\n%#07x : ", zPC);
 #ifdef DEBUG
         for (si = 0; si < 9; si++)
             opdesc[si][0] = 0;
@@ -137,11 +140,6 @@ int zerp_run() {
         LOG(ZCRAZY, "opvalues: %04s %04s %04s %04s %04s %04s %04s %04s\n",
                     opdesc[0], opdesc[1], opdesc[2], opdesc[3],
                     opdesc[4], opdesc[5], opdesc[6], opdesc[7]);
-        LOG(ZCRAZY, "locals: %#04x %#04x %#04x %#04x %#04x %#04x %#04x %#04x\n        %#04x %#04x %#04x %#04x %#04x %#04x %#04x %#04x\n",
-                    zFP->locals[0], zFP->locals[1], zFP->locals[2], zFP->locals[3],
-                    zFP->locals[4], zFP->locals[5], zFP->locals[6], zFP->locals[7],
-                    zFP->locals[8], zFP->locals[9], zFP->locals[10], zFP->locals[11],
-                    zFP->locals[12], zFP->locals[13], zFP->locals[14], zFP->locals[15]);
                     
         switch (opcount) {
             case COUNT_2OP:
@@ -196,13 +194,13 @@ int zerp_run() {
                         store_op("LOADB %#s[%#s]", get_byte(operands[0] + operands[1]))
                         break;
                     case GET_PROP:
-                        store_op("#GET_PROP %#s, %#s", 0)
+                        store_op("#GET_PROP %#s, %#s", 0xbeef)
                         break;
                     case GET_PROP_ADDR:
-                        store_op("#GET_PROP_ADDR %#s, %#s", 0)
+                        store_op("#GET_PROP_ADDR %#s, %#s", 0xbeef)
                         break;
                     case GET_NEXT_PROP:
-                        store_op("#GET_NEXT_PROP %#s, %#s", 0)
+                        store_op("#GET_NEXT_PROP %#s, %#s", 0xbeef)
                         break;
                     case ADD:
                         store_op("ADD %#s + %#s", (signed short)operands[0] + (signed short)operands[1])
@@ -224,19 +222,19 @@ int zerp_run() {
             case COUNT_1OP:
                 switch (opcode) {
                     case JZ:
-                        branch_op("JZ %#s, ", operands[0] == 0)
+                        branch_op("JZ %#s", operands[0] == 0)
                         break;
                     case GET_SIBLING:
-                        store_branch_op("#GET_SIBLING %#s", 0, 0)
+                        store_branch_op("#GET_SIBLING %#s", 0xbeef, 0)
                         break;
                     case GET_CHILD:
-                        store_branch_op("#GET_CHILD %#s", 0, 0)
+                        store_branch_op("#GET_CHILD %#s", 0xbeef, 0)
                         break;
                     case GET_PARENT:
-                        store_op("#GET_PARENT %#s", 0)
+                        store_op("#GET_PARENT %#s", 0xbeef)
                         break;
                     case GET_PROP_LEN:
-                        store_op("#GET_PROP_LEN %#s", 0)
+                        store_op("#GET_PROP_LEN %#s", 0xbeef)
                         break;
                     case INC:
                         LOG(ZDEBUG, "INC %#s \n", opdesc[0]);

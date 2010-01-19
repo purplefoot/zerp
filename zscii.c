@@ -8,7 +8,7 @@
 #include "zerp.h"
 #include "zscii.h"
 
-int print_zstring(unsigned short address) {
+int print_zstring(packed_addr_t address) {
     int words = 0, alpha = 0, zscii = 0, zsciichar = 0, bitshift, abbrv_index;
     zword_t zword;
     unsigned char zchar, abbriv = 0;
