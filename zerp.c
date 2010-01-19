@@ -309,7 +309,8 @@ int zerp_run() {
                     return_zroutine(operands[0]);
                     break;
                     case JUMP:
-                    LOG(ZDEBUG, "JUMP %#s \n", opdesc[0]);
+                    LOG(ZDEBUG, "JUMP %#04x \n", (signed short) (zPC + operands[0] - 2));
+                    zPC = zPC + (signed short) (operands[0] - 2);
                     break;
                     case PRINT_PADDR:
                     LOG(ZDEBUG, "PRINT_PADDR %#s \n", opdesc[0]);
