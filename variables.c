@@ -56,6 +56,6 @@ int variable_set(zbyte_t variable, zword_t value) {
         glk_printf("Writing global %#x\n", variable - 0x10);
         dump_globals();
 #endif
-        return 1;
+        return value;
     }
 }

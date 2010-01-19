@@ -121,4 +121,61 @@ int zerp_run();
 void fatal_error(char *message);
 int glk_printf(char *format, ...);
 
+/* Some large macros to keep opcode stuff in line in the main loop */
+#define branch_op(debug_string, test) LOG(ZDEBUG, debug_string, opdesc[0], opdesc[1], opdesc[2], opdesc[3]); \
+branch = get_byte(zPC++); \
+LOG(ZDEBUG, ", [%s] ", branch >> 7 & 1 ? "TRUE" : "FALSE"); \
+if (!(branch >> 6 & 1)) { \
+    branch_long = get_byte(zPC++); \
+    boffset = branch & 0x1f; \
+    boffset = boffset << 8 | branch_long; \
+    boffset &= 0x1fff; \
+    boffset |= (branch >> 6 & 1) << 15; \
+} else { \
+    boffset = branch & 0x3f; \
+} \
+if (boffset < 2) { \
+    LOG(ZDEBUG, "%s\n", boffset ? "RTRUE" : "RFALSE"); \
+} else { \
+    LOG(ZDEBUG, " %04x\n", zPC + boffset - 2); \
+} \
+if ((test) ^ !(branch >> 7 & 1)) { \
+    if (boffset < 2) { \
+        return_zroutine(boffset); \
+    } else { \
+        zPC += operands[0] - 2; \
+    } \
+} 
+
+#define store_op(debug_string, store_exp) store_loc = get_byte(zPC++); \
+LOG(ZDEBUG, debug_string, opdesc[0], opdesc[1], opdesc[2], opdesc[3]); \
+LOG(ZDEBUG, " -> %#s\n", var_name((char *)&opdesc[8], store_loc)); \
+variable_set(store_loc, store_exp);
+
+#define store_branch_op(debug_string, store_exp, test) store_loc = get_byte(zPC++); \
+LOG(ZDEBUG, debug_string, opdesc[0], opdesc[1], opdesc[2], opdesc[3]); \
+LOG(ZDEBUG, " -> %#s", var_name((char *)&opdesc[8], store_loc)); \
+variable_set(store_loc, store_exp); \
+branch = get_byte(zPC++); \
+LOG(ZDEBUG, ", [%s] ", branch >> 7 & 1 ? "TRUE" : "FALSE"); \
+if (!(branch >> 6 & 1)) { \
+    branch_long = get_byte(zPC++); \
+    boffset = branch & 0x1f; \
+    boffset = boffset << 8 | branch_long; \
+    boffset &= 0x1fff; \
+    boffset |= (branch >> 6 & 1) << 15; \
+} else { \
+    boffset = branch & 0x3f; \
+} \
+if ((test) ^ !(branch >> 7 & 1)) { \
+    if (boffset < 2) { \
+        LOG(ZDEBUG, "%s\n", boffset ? "RTRUE" : "RFALSE"); \
+        return_zroutine(boffset); \
+    } else { \
+        LOG(ZDEBUG, " %04x\n", zPC + boffset - 2); \
+        zPC += operands[0] - 2; \
+    } \
+}
+
+
 #endif /* ZERP_H */

@@ -3,7 +3,6 @@
     zerp.c : main z-machine interpreter
 */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include "glk.h"
@@ -33,8 +32,9 @@ inline static int decode_long(unsigned char opbyte, zword_t *operands);
 /* main interpreter entrypoint */
 int zerp_run() {
     zbyte_t op, store_loc, branch, branch_long;
-    int opsize, opcode, opcount, var_opcount;
+    int opsize, opcode, opcount, var_opcount, running;
     zword_t operands[8];
+    signed short boffset;
 
 
     /* intialise the stack and pc */
@@ -58,9 +58,10 @@ int zerp_run() {
         
     LOG(ZDEBUG,"Running...\n", 0);
     
-    int max = 26;
-    while (TRUE) {
-        LOG(ZDEBUG,"%#04x : ", zPC);
+    running = TRUE;
+    
+    while (running) {
+        LOG(ZDEBUG,"%#07x : ", zPC);
 #ifdef DEBUG
         for (si = 0; si < 9; si++)
             opdesc[si][0] = 0;
@@ -146,304 +147,262 @@ int zerp_run() {
             case COUNT_2OP:
                 switch (opcode) {
                     case JE:
-                    branch = get_byte(zPC++);
-                    if (!(branch >> 6 & 1))
-                        branch_long = get_byte(zPC++);
-                    LOG(ZDEBUG, "JE %#s : %#s %#s %#s, %#s\n", opdesc[0], opdesc[1], opdesc[2], opdesc[3], var_name((char *)&opdesc[9], branch));
-                    break;
+                        branch_op("#JE %#s : %#s %#s %#s", operands[0] == operands[1])
+                        break;
                     case JL:
-                    branch = get_byte(zPC++);
-                    if (!(branch >> 6 & 1))
-                        branch_long = get_byte(zPC++);
-                    LOG(ZDEBUG, "JL %#s < %#s, %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[9], branch));
-                    break;
+                        branch_op("JL %#s < %#s", operands[0] < operands[1])
+                        break;
                     case JG:
-                    branch = get_byte(zPC++);
-                    if (!(branch >> 6 & 1))
-                        branch_long = get_byte(zPC++);
-                    LOG(ZDEBUG, "JG %#s > %#s, %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[9], branch));
-                    break;
+                        branch_op("JL %#s > %#s", operands[0] > operands[1])
+                        break;
                     case DEC_CHK:
-                    branch = get_byte(zPC++);
-                    if (!(branch >> 6 & 1))
-                        branch_long = get_byte(zPC++);
-                    LOG(ZDEBUG, "DEC_CHECK %#s, %#s, %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[9], branch));
-                    break;
+                        branch_op("DEC_CHECK %#s, %#s", variable_set(operands[0], variable_get(operands[0]) - 1) < operands[1])
+                        break;
                     case INC_CHK:
-                    branch = get_byte(zPC++);
-                    if (!(branch >> 6 & 1))
-                        branch_long = get_byte(zPC++);
-                    LOG(ZDEBUG, "INC_CHECK %#s, %#s, %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[9], branch));
-                    break;
+                        branch_op("INC_CHECK %#s, %#s", variable_set(operands[0], variable_get(operands[0]) + 1) > operands[1])
+                        break;
                     case JIN:
-                    branch = get_byte(zPC++);
-                    if (!(branch >> 6 & 1))
-                        branch_long = get_byte(zPC++);
-                    LOG(ZDEBUG, "JIN %#s in %#s, %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[9], branch));
-                    break;
+                        branch_op("#JIN %#s in %#s", 0)
+                        break;
                     case TEST:
-                    branch = get_byte(zPC++);
-                    if (!(branch >> 6 & 1))
-                        branch_long = get_byte(zPC++);
-                    LOG(ZDEBUG, "TEST %#s, %#s, %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[9], branch));
-                    break;
+                        branch_op("TEST %#s &= %#s", operands[0] & operands[1] == operands[1])
+                        break;
                     case OR:
-                    store_loc = get_byte(zPC++);
-                    LOG(ZDEBUG, "OR %#s | %#s -> %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
-                    break;
+                        store_op("OR %#s | %#s", operands[0] | operands[1])
+                        break;
                     case AND:
-                    store_loc = get_byte(zPC++);
-                    LOG(ZDEBUG, "AND %#s & %#s -> %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
-                    break;
+                        store_op("AND %#s | %#s", operands[0] & operands[1])
+                        break;
                     case TEST_ATTR:
-                    branch = get_byte(zPC++);
-                    if (!(branch >> 6 & 1))
-                        branch_long = get_byte(zPC++);
-                    LOG(ZDEBUG, "TEST_ATTR %#s, %#s, %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[9], branch));
-                    break;
+                        branch_op("#TEST_ATTR %#s, %#s, ", 0)
+                        break;
                     case SET_ATTR:
-                    LOG(ZDEBUG, "SET_ATTR %#s, %#s\n", opdesc[0], opdesc[1]);
-                    break;
+                        LOG(ZDEBUG, "#SET_ATTR %#s, %#s\n", opdesc[0], opdesc[1]);
+                        break;
                     case CLEAR_ATTR:
-                    LOG(ZDEBUG, "CLEAR_ATTR %#s, %#s\n", opdesc[0], opdesc[1]);
-                    break;
+                        LOG(ZDEBUG, "#CLEAR_ATTR %#s, %#s\n", opdesc[0], opdesc[1]);
+                        break;
                     case STORE:
-                    LOG(ZDEBUG, "STORE %#s, %#s\n", var_name((char *)&opdesc[0], operands[0]), opdesc[1]);
-                    variable_set(operands[0], operands[1]);
-                    break;
+                        LOG(ZDEBUG, "STORE %#s, %#s\n", var_name((char *)&opdesc[0], operands[0]), opdesc[1]);
+                        variable_set(operands[0], operands[1]);
+                        break;
                     case INSERT_OBJ:
-                    LOG(ZDEBUG, "INSERT_OBJ %#s, %#s\n", opdesc[0], opdesc[1]);
-                    break;
+                        LOG(ZDEBUG, "#INSERT_OBJ %#s, %#s\n", opdesc[0], opdesc[1]);
+                        break;
                     case LOADW:
-                    store_loc = get_byte(zPC++);
-                    LOG(ZDEBUG, "LOADW %#s->%#s -> %#s \n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
-                    break;
+                        store_op("LOADW %#s[%#s]", get_word(operands[0] + operands[1] * 2))
+                        break;
                     case LOADB:
-                    store_loc = get_byte(zPC++);
-                    LOG(ZDEBUG, "LOADB %#s->%#s -> %#s \n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
-                    break;
+                        store_op("LOADB %#s[%#s]", get_byte(operands[0] + operands[1]))
+                        break;
                     case GET_PROP:
-                    store_loc = get_byte(zPC++);
-                    LOG(ZDEBUG, "GET_PROP %#s,%#s -> %#s \n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
-                    break;
+                        store_op("#GET_PROP %#s, %#s", 0)
+                        break;
                     case GET_PROP_ADDR:
-                    store_loc = get_byte(zPC++);
-                    LOG(ZDEBUG, "GET_PROP_ADDR %#s,%#s -> %#s \n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
-                    break;
+                        store_op("#GET_PROP_ADDR %#s, %#s", 0)
+                        break;
                     case GET_NEXT_PROP:
-                    store_loc = get_byte(zPC++);
-                    LOG(ZDEBUG, "GET_NEXT_PROP %#s,%#s -> %#s \n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
-                    break;
+                        store_op("#GET_NEXT_PROP %#s, %#s", 0)
+                        break;
                     case ADD:
-                    store_loc = get_byte(zPC++);
-                    LOG(ZDEBUG, "ADD %#s + %#s -> %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
-                    break;
+                        store_op("ADD %#s + %#s", (signed short)operands[0] + (signed short)operands[1])
+                        break;
                     case SUB:
-                    store_loc = get_byte(zPC++);
-                    LOG(ZDEBUG, "SUB %#s - %#s -> %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
-                    break;
+                        store_op("SUB %#s - %#s", (signed short)operands[0] - (signed short)operands[1])
+                        break;
                     case MUL:
-                    store_loc = get_byte(zPC++);
-                    LOG(ZDEBUG, "MUL %#s * %#s -> %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
-                    break;
+                        store_op("MUL %#s * %#s", (signed short)operands[0] * (signed short)operands[1])
+                        break;
                     case DIV:
-                    store_loc = get_byte(zPC++);
-                    LOG(ZDEBUG, "DIV %#s / %#s -> %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
-                    break;
+                        store_op("DIV %#s / %#s", (signed short)operands[0] / (signed short)operands[1])
+                        break;
                     case MOD:
-                    store_loc = get_byte(zPC++);
-                    LOG(ZDEBUG, "MOD %#s %% %#s -> %#s\n", opdesc[0], opdesc[1], var_name((char *)&opdesc[8], store_loc));
-                    break;
+                        store_op("MOD %#s %% %#s", (signed short)operands[0] % (signed short)operands[1])
+                        break;
                 }
                 break;
             case COUNT_1OP:
                 switch (opcode) {
                     case JZ:
-                    branch = get_byte(zPC++);
-                    if (!(branch >> 6 & 1))
-                        branch_long = get_byte(zPC++);
-                    LOG(ZDEBUG, "JZ %#s, %#s\n", opdesc[0], var_name((char *)&opdesc[9], branch));
-                    break;
+                        branch_op("JZ %#s, ", operands[0] == 0)
+                        break;
                     case GET_SIBLING:
-                    store_loc = get_byte(zPC++);
-                    branch = get_byte(zPC++);
-                    if (!(branch >> 6 & 1))
-                        branch_long = get_byte(zPC++);
-                    LOG(ZDEBUG, "GET_SIBLING %#s -> %#s, %#s\n", opdesc[0], var_name((char *)&opdesc[8], store_loc),
-                                                                             var_name((char *)&opdesc[9], branch));
-                    break;
+                        store_branch_op("#GET_SIBLING %#s", 0, 0)
+                        break;
                     case GET_CHILD:
-                    store_loc = get_byte(zPC++);
-                    branch = get_byte(zPC++);
-                    if (!(branch >> 6 & 1))
-                        branch_long = get_byte(zPC++);
-                    LOG(ZDEBUG, "GET_CHILD %#s -> %#s, %#s\n", opdesc[0], var_name((char *)&opdesc[8], store_loc),
-                                                                             var_name((char *)&opdesc[9], branch));
-
-                    break;
+                        store_branch_op("#GET_CHILD %#s", 0, 0)
+                        break;
                     case GET_PARENT:
-                    store_loc = get_byte(zPC++);
-                    LOG(ZDEBUG, "GET_PARENT %#s -> %#s\n", opdesc[0], var_name((char *)&opdesc[8], store_loc));
-                    break;
+                        store_op("#GET_PARENT %#s", 0)
+                        break;
                     case GET_PROP_LEN:
-                    store_loc = get_byte(zPC++);
-                    LOG(ZDEBUG, "GET_PROP_LEN %#s -> %#s\n", opdesc[0], var_name((char *)&opdesc[8], store_loc));
-                    break;
+                        store_op("#GET_PROP_LEN %#s", 0)
+                        break;
                     case INC:
-                    LOG(ZDEBUG, "INC %#s \n", opdesc[0]);
-                    break;
+                        LOG(ZDEBUG, "INC %#s \n", opdesc[0]);
+                        variable_set(operands[0], ((signed short)variable_get(operands[0])) + 1);
+                        break;
                     case DEC:
-                    LOG(ZDEBUG, "DEC %#s \n", opdesc[0]);
-                    break;
+                        LOG(ZDEBUG, "DEC %#s \n", opdesc[0]);
+                        variable_set(operands[0], ((signed short)variable_get(operands[0])) - 1);
+                        break;
                     case PRINT_ADDR:
-                    LOG(ZDEBUG, "PRINT_ADDR %#s \n", opdesc[0]);
-                    break;
+                        LOG(ZDEBUG, "PRINT_ADDR %#s \"", opdesc[0]);
+                        print_zstring(operands[0]);
+                        LOG(ZDEBUG, "\"\n", 0);
+                        break;
                     case REMOVE_OBJ:
-                    LOG(ZDEBUG, "REMOVE_OBJ %#s \n", opdesc[0]);
-                    break;
+                        LOG(ZDEBUG, "#REMOVE_OBJ %#s \n", opdesc[0]);
+                        break;
                     case PRINT_OBJ:
-                    LOG(ZDEBUG, "PRINT_OBJ %#s \n", opdesc[0]);
-                    break;
+                        LOG(ZDEBUG, "#PRINT_OBJ %#s \n", opdesc[0]);
+                        break;
                     case RET:
-                    LOG(ZDEBUG, "RET %#s \n", opdesc[0]);
-                    return_zroutine(operands[0]);
-                    break;
+                        LOG(ZDEBUG, "RET %#s \n", opdesc[0]);
+                        return_zroutine(operands[0]);
+                        break;
                     case JUMP:
-                    LOG(ZDEBUG, "JUMP %#04x \n", (signed short) (zPC + operands[0] - 2));
-                    zPC = zPC + (signed short) (operands[0] - 2);
-                    break;
+                        LOG(ZDEBUG, "JUMP %#04x \n", (signed short) (zPC + operands[0] - 2));
+                        zPC += (signed short) (operands[0] - 2);
+                        break;
                     case PRINT_PADDR:
-                    LOG(ZDEBUG, "PRINT_PADDR %#s \n", opdesc[0]);
-                    break;
+                        LOG(ZDEBUG, "PRINT_PADDR %#s \"", opdesc[0]);
+                        print_zstring(unpack(operands[0]));
+                        LOG(ZDEBUG, "\"\n", 0);
+                        break;
                     case LOAD:
-                    store_loc = get_byte(zPC++);
-                    LOG(ZDEBUG, "LOAD %#s -> %#s\n", opdesc[0], var_name((char *)&opdesc[8], store_loc));
-                    break;
+                        store_op("#LOAD %#s", 0)
+                        break;
                     case NOT:
-                    store_loc = get_byte(zPC++);
-                    LOG(ZDEBUG, "NOT !%#s -> %#s\n", opdesc[0], var_name((char *)&opdesc[8], store_loc));
-                    break;
+                        store_op("NOT !%#s", ~operands[0])
+                        break;
                 }
                 break;
             case COUNT_0OP:
                 switch (opcode) {
                     case RTRUE:
-                    return_zroutine(1);
-                    LOG(ZDEBUG, "RTRUE\n", 0);
-                    break;
+                        LOG(ZDEBUG, "RTRUE\n", 0);
+                        return_zroutine(1);
+                        break;
                     case RFALSE:
-                    LOG(ZDEBUG, "RFALSE\n", 0);
-                    return_zroutine(0);
-                    break;
+                        LOG(ZDEBUG, "RFALSE\n", 0);
+                        return_zroutine(0);
+                        break;
                     case PRINT:
-                    LOG(ZDEBUG, "PRINT \"", 0);
-                    zPC += print_zstring(zPC);
-                    LOG(ZDEBUG, "\"\n", 0);
-                    break;
+                        LOG(ZDEBUG, "PRINT \"", 0);
+                        zPC += print_zstring(zPC);
+                        LOG(ZDEBUG, "\"\n", 0);
+                        break;
                     case PRINT_RET:
-                    LOG(ZDEBUG, "PRINT_RET \"", 0);
-                    zPC += print_zstring(zPC);
-                    LOG(ZDEBUG, "\"\n", 0);
-                    glk_put_string("\n");
-                    return_zroutine(1);
-                    break;
+                        LOG(ZDEBUG, "PRINT_RET \"", 0);
+                        zPC += print_zstring(zPC);
+                        LOG(ZDEBUG, "\"\n", 0);
+                        glk_put_string("\n");
+                        return_zroutine(1);
+                        break;
                     case NOP:
-                    LOG(ZDEBUG, "NOP\n", 0);
-                    break;
+                        LOG(ZDEBUG, "NOP\n", 0);
+                        break;
                     case SAVE:
-                    branch = get_byte(zPC++);
-                    if (!(branch >> 6 & 1))
-                        branch_long = get_byte(zPC++);
-                    LOG(ZDEBUG, "SAVE, %#s\n", var_name((char *)&opdesc[9], branch));
-                    break;
+                        branch_op("#SAVE", 1)
+                        break;
                     case RESTORE:
-                    branch = get_byte(zPC++);
-                    if (!(branch >> 6 & 1))
-                        branch_long = get_byte(zPC++);
-                    LOG(ZDEBUG, "RESTORE, %#s\n", var_name((char *)&opdesc[9], branch));
-                    break;
+                        branch_op("#RESTORE", 1)
+                        break;
                     case RESTART:
-                    LOG(ZDEBUG, "RESTART\n", 0);
-                    break;
+                        LOG(ZDEBUG, "#RESTART\n", 0);
+                        break;
                     case RET_POPPED:
-                    LOG(ZDEBUG, "RET_POPPED\n", 0);
-                    return_zroutine(stack_pop());
-                    break;
+                        LOG(ZDEBUG, "RET_POPPED\n", 0);
+                        return_zroutine(stack_pop());
+                        break;
                     case POP:
-                    LOG(ZDEBUG, "POP\n", 0);
-                    break;
+                        LOG(ZDEBUG, "POP\n", 0);
+                        stack_pop();
+                        break;
                     case QUIT:
-                    LOG(ZDEBUG, "QUIT\n", 0);
-                    break;
+                        LOG(ZDEBUG, "QUIT\n", 0);
+                        running = FALSE;
+                        break;
                     case NEW_LINE:
-                    LOG(ZDEBUG, "NEW_LINE\n", 0);
-                    glk_put_string("\n");
-                    break;
+                        LOG(ZDEBUG, "NEW_LINE\n", 0);
+                        glk_put_string("\n");
+                        break;
                     case SHOW_STATUS:
-                    LOG(ZDEBUG, "SHOW_STATUS\n", 0);
-                    break;
+                        LOG(ZDEBUG, "#SHOW_STATUS\n", 0);
+                        break;
                     case VERIFY:
-                    branch = get_byte(zPC++);
-                    if (!(branch >> 6 & 1))
-                        branch_long = get_byte(zPC++);
-                    LOG(ZDEBUG, "VERIFY, %#s\n", var_name((char *)&opdesc[9], branch));
-                    break;
+                        branch_op("#VERIFY", 1)
+                        break;
                 }
                 break;
             case COUNT_VAR:
                 switch (opcode) {
-                    int i;
                     case CALL:
-                    store_loc = get_byte(zPC++);
-                    LOG(ZDEBUG, "CALL %#04x (", unpack(operands[0]));
-                    for (i = 1; i < var_opcount; i++) {
-                        LOG(ZDEBUG, "%#s ", opdesc[i]);
-                    }
-                    LOG(ZDEBUG, ") -> %#s\n", var_name((char *)&opdesc[8], store_loc));
-                    call_zroutine(unpack(operands[0]), &operands[1], var_opcount - 1, store_loc);
-                    break;
+                        store_loc = get_byte(zPC++);
+                        LOG(ZDEBUG, "CALL %#04x (", unpack(operands[0]));
+                        int i;
+                        for (i = 1; i < var_opcount; i++) {
+                            LOG(ZDEBUG, "%#s ", opdesc[i]);
+                        }
+                        LOG(ZDEBUG, ") -> %#s\n", var_name((char *)&opdesc[8], store_loc));
+                        call_zroutine(unpack(operands[0]), &operands[1], var_opcount - 1, store_loc);
+                        break;
                     case STOREW:
-                    LOG(ZDEBUG, "STOREW %#s->%#s -> %#s \n", opdesc[0], opdesc[1], opdesc[2]);
-                    break;
+                        LOG(ZDEBUG, "STOREW %#s->%#s -> %#s \n", opdesc[0], opdesc[1], opdesc[2]);
+                        store_word(operands[0] + operands[1] * 2, operands[2])
+                        break;
                     case STOREB:
-                    LOG(ZDEBUG, "STOREB %#s->%#s -> %#s \n", opdesc[0], opdesc[1], opdesc[2]);
-                    break;
+                        LOG(ZDEBUG, "STOREB %#s->%#s -> %#s \n", opdesc[0], opdesc[1], opdesc[2]);
+                        store_byte(operands[0] + operands[1], operands[2])
+                        break;
                     case PUT_PROP:
-                    LOG(ZDEBUG, "PUT_PROP %#s %#s -> %#s \n", opdesc[0], opdesc[1], opdesc[2]);
-                    break;
+                        LOG(ZDEBUG, "#PUT_PROP %#s %#s -> %#s \n", opdesc[0], opdesc[1], opdesc[2]);
+                        break;
                     case SREAD:
-                    LOG(ZDEBUG, "SREAD %#s %#s\n", opdesc[0], opdesc[1]);
-                    break;
+                        LOG(ZDEBUG, "#SREAD %#s %#s\n", opdesc[0], opdesc[1]);
+                        break;
                     case PRINT_CHAR:
-                    LOG(ZDEBUG, "PRINT_CHAR %#s\n", opdesc[0]);
-                    break;
+                        LOG(ZDEBUG, "PRINT_CHAR %#s\n", opdesc[0]);
+                        glk_put_char(operands[0]);
+                        break;
                     case PRINT_NUM:
-                    LOG(ZDEBUG, "PRINT_NUM %#s\n", opdesc[0]);
-                    break;
+                        LOG(ZDEBUG, "PRINT_NUM %#s\n", opdesc[0]);
+                        glk_printf("%d", (signed short)operands[0]);
+                        break;
                     case RANDOM:
-                    store_loc = get_byte(zPC++);
-                    LOG(ZDEBUG, "RANDOM %#s -> %#s\n", opdesc[0], var_name((char *)&opdesc[8], store_loc));
+                        store_loc = get_byte(zPC++);
+                        LOG(ZDEBUG, "RANDOM %#s -> %#s\n", opdesc[0], var_name((char *)&opdesc[8], store_loc));
+                        if ((signed short)operands[0] < 0) {
+                            srandom(operands[0]);
+                            variable_set(store_loc, 0);
+                        } else {
+                            variable_set(store_loc, random());
+                        }
+                        break;
                     case PUSH:
-                    LOG(ZDEBUG, "PUSH %#s -> SP\n", opdesc[0]);
-                    break;
+                        LOG(ZDEBUG, "PUSH %#s -> SP\n", opdesc[0]);
+                        stack_push(operands[0]);
+                        break;
                     case PULL:
-                    LOG(ZDEBUG, "PULL SP -> %#s\n", opdesc[0]);
-                    break;
+                        LOG(ZDEBUG, "#PULL SP -> %#s\n", opdesc[0]);
+                        variable_set(operands[0], stack_pop);
+                        break;
                     case SPLIT_WINDOW:
-                    LOG(ZDEBUG, "SPLIT_WINDOW %#s\n", opdesc[0]);
-                    break;
+                        LOG(ZDEBUG, "#SPLIT_WINDOW %#s\n", opdesc[0]);
+                        break;
                     case SET_WINDOW:
-                    LOG(ZDEBUG, "SET_WINDOW %#s\n", opdesc[0]);
-                    break;
+                        LOG(ZDEBUG, "#SET_WINDOW %#s\n", opdesc[0]);
+                        break;
                     case OUTPUT_STREAM:
-                    LOG(ZDEBUG, "OUTPUT_STREAM %#s\n", opdesc[0]);
-                    break;
+                        LOG(ZDEBUG, "#OUTPUT_STREAM %#s\n", opdesc[0]);
+                        break;
                     case INPUT_STREAM:
-                    LOG(ZDEBUG, "INPUT_STREAM %#s\n", opdesc[0]);
-                    break;
+                        LOG(ZDEBUG, "#INPUT_STREAM %#s\n", opdesc[0]);
+                        break;
                     case SOUND_EFFECT:
-                    LOG(ZDEBUG, "SOUND_EFFECT %#s\n", opdesc[0]);
-                    break;
+                        LOG(ZDEBUG, "#SOUND_EFFECT %#s\n", opdesc[0]);
+                        break;
                 }
                 break;
             default:

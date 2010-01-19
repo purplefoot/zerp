@@ -25,7 +25,7 @@ int stack_push(zword_t value) {
 #if DEBUG > ZDEBUG
     dump_stack();
 #endif
-    *(zSP++) = value;
+    return *(zSP++) = value;
     if (zSP >= zStackTop) {
         fatal_error("Value stack overflow!\n");
     }
