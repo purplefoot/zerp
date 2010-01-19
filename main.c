@@ -81,6 +81,7 @@ void glk_main(void)
     }
     zerp_run();
     
+    free(zMachine);
     munmap ((void*) zGamefile, info.st_size);
     return;
 
@@ -114,5 +115,15 @@ int glk_printf(char *format, ...) {
 
 void fatal_error(char *message) {
     glk_printf("FATAL ERROR: %#04x : %s\n", zPC, message);
+    
+    /* free any space we might have alloc'd */
+    if (zStack)
+        free(zStack);
+    if (zCallStack)
+        free(zCallStack);
+    if (zMachine)
+        free(zMachine);
+        
+    /* And.... done. */    
     glk_exit();
 }

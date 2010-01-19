@@ -451,6 +451,10 @@ int zerp_run() {
                 glk_put_string("ABORT: Unknown Z-machine opcode.");
         }
     }
+    
+    /* Done, so clean up */
+    free(zStack);
+    free(zCallStack);
 }
 
 /*
