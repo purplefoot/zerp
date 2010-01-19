@@ -9,13 +9,16 @@
 #include "glk.h"
 #include "zerp.h"
 #include "opcodes.h"
+#include "stack.h"
 
 zword_t * zStack = 0;
 zword_t * zSP = 0;
 zword_t * zStackTop = 0;
-zword_t * zFP = 0;
+zstack_frame_t * zCallStack = 0;
+zstack_frame_t * zFP = 0;
+zstack_frame_t * zCallStackTop = 0;
 zword_t zGlobals = 0;
-unsigned short zPC = 0;
+packed_addr_t zPC = 0;
 
 #ifdef DEBUG
 static char opdesc[10][16];
@@ -29,20 +32,24 @@ inline static int decode_long(unsigned char opbyte, zword_t *operands);
 
 /* main interpreter entrypoint */
 int zerp_run() {
-    unsigned char op, store_loc, branch, branch_long;
+    zbyte_t op, store_loc, branch, branch_long;
     int opsize, opcode, opcount, var_opcount;
     zword_t operands[8];
 
 
     /* intialise the stack and pc */
     zStack = calloc(STACKSIZE, sizeof(zword_t));
-    if (!zStack) {
+    zStackTop = zStack + STACKSIZE;
+    zCallStack = calloc(CALLSTACKSIZE, sizeof(zstack_frame_t));
+    zCallStackTop = zCallStack + CALLSTACKSIZE;
+    if (!zStack || !zCallStack) {
         glk_put_string("Failed to allocate stack space!\n");
         return;
     }
-    zStackTop = zStack + STACKSIZE;
     
-    zSP = zStack; zFP = zSP;
+    zSP = zStack;
+    zFP = zCallStack;
+    zFP->sp = zSP;
     zPC = get_word(PC_INITIAL);
     zGlobals = get_word(GLOBALS);
     int inx;
@@ -52,7 +59,7 @@ int zerp_run() {
     LOG(ZDEBUG,"Running...\n", 0);
     
     int max = 26;
-    while (max--) {
+    while (TRUE) {
         LOG(ZDEBUG,"%#04x : ", zPC);
 #ifdef DEBUG
         for (si = 0; si < 9; si++)
@@ -123,13 +130,18 @@ int zerp_run() {
                 break;
         }
         
-        LOG(ZCRAZY, "operands: %#04x %#02x %#04x %#04x %#04x %#04x %#04x %#04x\n",
+        LOG(ZCRAZY, "operands: %#04x %#04x %#04x %#04x %#04x %#04x %#04x %#04x\n",
                     operands[0], operands[1], operands[2], operands[3],
                     operands[4], operands[5], operands[6], operands[7]);
         LOG(ZCRAZY, "opvalues: %04s %04s %04s %04s %04s %04s %04s %04s\n",
                     opdesc[0], opdesc[1], opdesc[2], opdesc[3],
                     opdesc[4], opdesc[5], opdesc[6], opdesc[7]);
-
+        LOG(ZCRAZY, "locals: %#04x %#04x %#04x %#04x %#04x %#04x %#04x %#04x\n        %#04x %#04x %#04x %#04x %#04x %#04x %#04x %#04x\n",
+                    zFP->locals[0], zFP->locals[1], zFP->locals[2], zFP->locals[3],
+                    zFP->locals[4], zFP->locals[5], zFP->locals[6], zFP->locals[7],
+                    zFP->locals[8], zFP->locals[9], zFP->locals[10], zFP->locals[11],
+                    zFP->locals[12], zFP->locals[13], zFP->locals[14], zFP->locals[15]);
+                    
         switch (opcount) {
             case COUNT_2OP:
                 switch (opcode) {
@@ -137,7 +149,7 @@ int zerp_run() {
                     branch = get_byte(zPC++);
                     if (!(branch >> 6 & 1))
                         branch_long = get_byte(zPC++);
-                    LOG(ZDEBUG, "JE %#s : %#s  %#s %#s, %#s\n", opdesc[0], opdesc[1], opdesc[2], opdesc[3], var_name((char *)&opdesc[9], branch));
+                    LOG(ZDEBUG, "JE %#s : %#s %#s %#s, %#s\n", opdesc[0], opdesc[1], opdesc[2], opdesc[3], var_name((char *)&opdesc[9], branch));
                     break;
                     case JL:
                     branch = get_byte(zPC++);
@@ -294,6 +306,7 @@ int zerp_run() {
                     break;
                     case RET:
                     LOG(ZDEBUG, "RET %#s \n", opdesc[0]);
+                    return_zroutine(operands[0]);
                     break;
                     case JUMP:
                     LOG(ZDEBUG, "JUMP %#s \n", opdesc[0]);
@@ -314,10 +327,12 @@ int zerp_run() {
             case COUNT_0OP:
                 switch (opcode) {
                     case RTRUE:
+                    return_zroutine(1);
                     LOG(ZDEBUG, "RTRUE\n", 0);
                     break;
                     case RFALSE:
                     LOG(ZDEBUG, "RFALSE\n", 0);
+                    return_zroutine(0);
                     break;
                     case PRINT:
                     LOG(ZDEBUG, "PRINT \"", 0);
@@ -329,6 +344,7 @@ int zerp_run() {
                     zPC += print_zstring(zPC);
                     LOG(ZDEBUG, "\"\n", 0);
                     glk_put_string("\n");
+                    return_zroutine(1);
                     break;
                     case NOP:
                     LOG(ZDEBUG, "NOP\n", 0);
@@ -350,6 +366,7 @@ int zerp_run() {
                     break;
                     case RET_POPPED:
                     LOG(ZDEBUG, "RET_POPPED\n", 0);
+                    return_zroutine(stack_pop());
                     break;
                     case POP:
                     LOG(ZDEBUG, "POP\n", 0);
@@ -382,8 +399,7 @@ int zerp_run() {
                         LOG(ZDEBUG, "%#s ", opdesc[i]);
                     }
                     LOG(ZDEBUG, ") -> %#s\n", var_name((char *)&opdesc[8], store_loc));
-                    /* phony return value */
-                    stack_push(0);
+                    call_zroutine(unpack(operands[0]), &operands[1], var_opcount - 1, store_loc);
                     break;
                     case STOREW:
                     LOG(ZDEBUG, "STOREW %#s->%#s -> %#s \n", opdesc[0], opdesc[1], opdesc[2]);
@@ -540,7 +556,7 @@ char *var_name(char *opstr, unsigned char byte) {
     if (byte == 0) {
         snprintf(opstr, 16, "SP");
     } else if (byte < 0x10) {
-        snprintf(opstr, 16, "L%02x", byte);
+        snprintf(opstr, 16, "L%02x", byte - 1);
     } else {
         snprintf(opstr, 16, "G%02x", byte - 0x10);
     }

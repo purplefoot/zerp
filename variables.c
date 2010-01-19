@@ -25,14 +25,13 @@ static void dump_globals() {
 }
 #endif
 
-zword_t variable_get(unsigned char variable) {
+zword_t variable_get(zbyte_t variable) {
     if (variable == 0) {
         /* pop stack */
         return stack_pop();
     } else if (variable > 0 && variable < 0x10) {
         /* read a local */
-        glk_printf("Reading local %#x\n", variable);
-        return 0;
+        return zFP->locals[variable - 1];
     } else {
         /* read a global */
 #if DEBUG > ZDEBUG
@@ -43,14 +42,13 @@ zword_t variable_get(unsigned char variable) {
     }
 }
 
-int variable_set(unsigned char variable, zword_t value) {
+int variable_set(zbyte_t variable, zword_t value) {
     if (variable == 0) {
         /* push stack */
         return stack_push(value);
     } else if (variable > 0 && variable < 0x10) {
         /* write a local */
-        glk_printf("Writing local %#x\n", variable);
-        return 0;
+        return zFP->locals[variable - 1] = value;
     } else {
         /* write a global */
         store_word(zGlobals + ((variable - 0x10) *2), value);

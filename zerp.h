@@ -40,8 +40,10 @@
 /* Z-machine address formats */
 typedef unsigned short zword_t;
 typedef unsigned char zbyte_t;
+typedef unsigned int packed_addr_t;
+
 #define get_byte(offset) *(zMachine + offset)
-#define store_byte(offset, value) get_byte(offset) = (unsigned char) value;
+#define store_byte(offset, value) get_byte(offset) = (zbyte_t) value;
 #define get_word(addr) (((zword_t) get_byte(addr)) << 8 | get_byte(addr + 1))
 #define store_word(offset, value) store_byte(offset, value >> 8); store_byte(offset + 1,value & 0xff);
 #define get_word_addr(addr) get_word(addr) >> 1
@@ -49,6 +51,13 @@ typedef unsigned char zbyte_t;
 #define get_packed_addr(addr) get_word(addr) << 1
 #define store_packed_addr(addr) store_word(addr >> 1)
 #define unpack(addr) addr << 1
+
+typedef struct zstack_frame {
+    zword_t pc;
+    zword_t *sp;
+    zbyte_t ret_value;
+    zword_t locals[16];
+} zstack_frame_t;
 
 /* game file */
 extern char * zFilename;
@@ -60,10 +69,17 @@ extern unsigned char * zMachine;
 extern zword_t * zStack;
 extern zword_t * zSP;
 extern zword_t * zStackTop;
-extern zword_t * zFP;
-extern zword_t zGlobals;
+
+extern zstack_frame_t * zCallStack;
+extern zstack_frame_t * zFP;
+extern zstack_frame_t * zCallStackTop;
+
 #define STACKSIZE 8192
-extern unsigned short zPC;
+#define CALLSTACKSIZE 512
+
+extern zword_t zGlobals;
+
+extern packed_addr_t zPC;
 
 /* header offsets */
 #define Z_VERSION           0x00
@@ -102,8 +118,7 @@ extern unsigned short zPC;
 
 /* function declarations */
 int zerp_run();
-#ifdef DEBUG
+void fatal_error(char *message);
 int glk_printf(char *format, ...);
 
-#endif
 #endif /* ZERP_H */

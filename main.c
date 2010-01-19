@@ -99,7 +99,6 @@ static void show_banner() {
     glk_printf("%s, %d bytes.\n", basename(zFilename), zFilesize);
 }
 
-#ifdef DEBUG
 int glk_printf(char *format, ...) {
     va_list ap;
     char    buf[SMALLBUFF];
@@ -112,4 +111,8 @@ int glk_printf(char *format, ...) {
     va_end(ap);
     return res;
 }
-#endif
+
+void fatal_error(char *message) {
+    glk_printf("FATAL ERROR: %#04x : %s\n", zPC, message);
+    glk_exit();
+}

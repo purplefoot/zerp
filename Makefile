@@ -21,7 +21,7 @@ SOURCE = glkstart.c main.c zerp.c variables.c zscii.c stack.c
 
 OBJS = glkstart.o main.o zerp.o variables.o zscii.o stack.o
 
-all: zerp
+all: czerp
 
 zerp: $(OBJS)
 	$(CC) $(OPTIONS)  -I./glkterm -o zerp $(OBJS) $(LIBS)
