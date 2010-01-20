@@ -120,7 +120,7 @@ inline static int decode_short(packed_addr_t *pc, zinstruction_t *instruction, z
             (*pc)++;
             break;
         case SMALL_CONST:
-            (operands++)->bytes = get_word((*pc)++);
+            (operands++)->bytes = get_byte((*pc)++);
             break;
         case VARIABLE:
             (operands++)->bytes = (zword_t) get_byte((*pc)++);
@@ -198,7 +198,7 @@ int decode_store_and_branch(packed_addr_t *pc, zinstruction_t *instruction, zwor
                     break;
                 case GET_SIBLING:
                 case GET_CHILD:
-                    decode_store_op(pc, instruction, store);
+                        decode_store_op(pc, instruction, store);
                         decode_branch_op(pc, instruction, branch);
                     break;
                 case GET_PARENT:
@@ -229,7 +229,7 @@ static void decode_branch_op(packed_addr_t *pc, zinstruction_t *instruction, zbr
     
     instruction->branch_flag = TRUE;
     branch_short = get_byte((*pc)++);
-    branch->flag = branch_short >> 7 & 1;
+    branch->test = branch_short >> 7 & 1;
     if (!(branch_short >> 6 & 1)) {
         branch->type = BRANCH_LONG;
         branch_long = get_byte((*pc)++);
@@ -291,7 +291,7 @@ void print_zinstruction(packed_addr_t instructionPC, zinstruction_t *instruction
                 glk_printf(" %02x %02x", branch_operand->bytes >> 8, branch_operand->bytes & 0xff);
                 bytes_printed += 2;
             } else {
-                glk_printf(" %02x", branch_operand->bytes);
+                glk_printf(" %02x", branch_operand->bytes >> 8);
                 bytes_printed++;
             }
         }
@@ -353,8 +353,12 @@ void print_zinstruction(packed_addr_t instructionPC, zinstruction_t *instruction
     }
 
     if (instruction->branch_flag) {
-        glk_printf(" [%s]", branch_operand->flag ? "TRUE" : "FALSE");
-        glk_printf(" %04x", (zPC + branch_operand->offset) - 2);
+        glk_printf(" [%s]", branch_operand->test ? "TRUE" : "FALSE");
+        if (branch_operand->offset == 0 || branch_operand->offset == 1) {
+            branch_operand->offset ? glk_put_string(" RTRUE") : glk_put_string(" RFALSE");
+        } else {
+            glk_printf(" %04x", (zPC + branch_operand->offset) - 2);            
+        }
     }
 
 }

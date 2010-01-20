@@ -23,7 +23,7 @@ typedef struct zoperand {
 typedef struct zbranch {
     zword_t bytes;
     zbyte_t type;
-    zbyte_t flag;
+    zbyte_t test;
     signed short offset;
 } zbranch_t;
     

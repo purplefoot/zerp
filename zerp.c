@@ -21,11 +21,7 @@ zstack_frame_t * zCallStackTop = 0;
 zword_t zGlobals = 0;
 packed_addr_t zPC = 0;
 
-#ifdef DEBUG
-static char opdesc[10][16];
-static int si, opind;
-char *var_name(char *opstr, unsigned char byte);
-#endif
+static int test_je(zword_t value, zoperand_t *operands);
 
 /* main interpreter entrypoint */
 int zerp_run() {
@@ -58,6 +54,8 @@ int zerp_run() {
     
     while (running) {
         instructionPC = zPC;
+        zword_t res;
+        
         memset(&instruction, 0, sizeof(zinstruction_t));
         memset(&operands, 0, sizeof(zoperand_t) * 8);
         memset(&branch_operand, 0, sizeof(zbranch_t));
@@ -70,27 +68,27 @@ int zerp_run() {
         switch (instruction.count) {
             case COUNT_2OP:
                 switch (instruction.opcode) {
-        //             case JE:
-        //                 branch_op("#JE %#s : %#s %#s %#s", operands[0] == operands[1])
-        //                 break;
-        //             case JL:
-        //                 branch_op("JL %#s < %#s", operands[0] < operands[1])
-        //                 break;
-        //             case JG:
-        //                 branch_op("JL %#s > %#s", operands[0] > operands[1])
-        //                 break;
-        //             case DEC_CHK:
-        //                 branch_op("DEC_CHECK %#s, %#s", variable_set(operands[0], variable_get(operands[0]) - 1) < operands[1])
-        //                 break;
-        //             case INC_CHK:
-        //                 branch_op("INC_CHECK %#s, %#s", variable_set(operands[0], variable_get(operands[0]) + 1) > operands[1])
-        //                 break;
+                    case JE:
+                        branch_op(test_je(get_operand(0), &operands[1]))
+                        break;
+                    case JL:
+                        branch_op(get_operand(0) < get_operand(1))
+                        break;
+                    case JG:
+                        branch_op(get_operand(0) > get_operand(1))
+                        break;
+                    case DEC_CHK:
+                        branch_op(variable_set(operands[0].bytes, variable_get(operands[0].bytes) - 1) < operands[1].bytes)
+                        break;
+                    case INC_CHK:
+                        branch_op(variable_set(operands[0].bytes, variable_get(operands[0].bytes) + 1) > operands[1].bytes)
+                        break;
         //             case JIN:
         //                 branch_op("#JIN %#s in %#s", 0)
         //                 break;
-        //             case TEST:
-        //                 branch_op("TEST %#s &= %#s", operands[0] & operands[1] == operands[1])
-        //                 break;
+                    case TEST:
+                        branch_op(get_operand(0) & get_operand(1) == get_operand(1))
+                        break;
         //             case OR:
         //                 store_op("OR %#s | %#s", operands[0] | operands[1])
         //                 break;
@@ -147,9 +145,9 @@ int zerp_run() {
                 break;
             case COUNT_1OP:
                 switch (instruction.opcode) {
-        //             case JZ:
-        //                 branch_op("JZ %#s", operands[0] == 0)
-        //                 break;
+                    case JZ:
+                        branch_op(get_operand(0) == 0)
+                        break;
         //             case GET_SIBLING:
         //                 store_branch_op("#GET_SIBLING %#s", 0xbeef, 0)
         //                 break;
@@ -170,30 +168,24 @@ int zerp_run() {
         //                 LOG(ZDEBUG, "DEC %#s \n", opdesc[0]);
         //                 variable_set(operands[0], ((signed short)variable_get(operands[0])) - 1);
         //                 break;
-        //             case PRINT_ADDR:
-        //                 LOG(ZDEBUG, "PRINT_ADDR %#s \"", opdesc[0]);
-        //                 print_zstring(operands[0]);
-        //                 LOG(ZDEBUG, "\"\n", 0);
-        //                 break;
+                    case PRINT_ADDR:
+                        print_zstring(operands[0].bytes);
+                        break;
         //             case REMOVE_OBJ:
         //                 LOG(ZDEBUG, "#REMOVE_OBJ %#s \n", opdesc[0]);
         //                 break;
         //             case PRINT_OBJ:
         //                 LOG(ZDEBUG, "#PRINT_OBJ %#s \n", opdesc[0]);
         //                 break;
-        //             case RET:
-        //                 LOG(ZDEBUG, "RET %#s \n", opdesc[0]);
-        //                 return_zroutine(operands[0]);
-        //                 break;
-        //             case JUMP:
-        //                 LOG(ZDEBUG, "JUMP %#04x \n", (signed short) (zPC + operands[0] - 2));
-        //                 zPC += (signed short) (operands[0] - 2);
-        //                 break;
-        //             case PRINT_PADDR:
-        //                 LOG(ZDEBUG, "PRINT_PADDR %#s \"", opdesc[0]);
-        //                 print_zstring(unpack(operands[0]));
-        //                 LOG(ZDEBUG, "\"\n", 0);
-        //                 break;
+                    case RET:
+                        return_zroutine(get_operand(0));
+                        break;
+                    case JUMP:
+                        zPC += (signed short) (operands[0].bytes - 2);
+                        break;
+                    case PRINT_PADDR:
+                        print_zstring(unpack(operands[0].bytes));
+                        break;
         //             case LOAD:
         //                 store_op("#LOAD %#s", 0)
         //                 break;
@@ -204,25 +196,22 @@ int zerp_run() {
                 break;
             case COUNT_0OP:
                 switch (instruction.opcode) {
-        //             case RTRUE:
-        //                 LOG(ZDEBUG, "RTRUE\n", 0);
-        //                 return_zroutine(1);
-        //                 break;
-        //             case RFALSE:
-        //                 LOG(ZDEBUG, "RFALSE\n", 0);
-        //                 return_zroutine(0);
-        //                 break;
+                    case RTRUE:
+                        return_zroutine(1);
+                        break;
+                    case RFALSE:
+                        return_zroutine(0);
+                        break;
                     case PRINT:
                         zPC += print_zstring(zPC);
                         break;
                     case PRINT_RET:
                         zPC += print_zstring(zPC);
                         glk_put_string("\n");
-                        // return_zroutine(1);
+                        return_zroutine(1);
                         break;
-        //             case NOP:
-        //                 LOG(ZDEBUG, "NOP\n", 0);
-        //                 break;
+                    case NOP:
+                        break;
         //             case SAVE:
         //                 branch_op("#SAVE", 1)
         //                 break;
@@ -232,25 +221,20 @@ int zerp_run() {
         //             case RESTART:
         //                 LOG(ZDEBUG, "#RESTART\n", 0);
         //                 break;
-        //             case RET_POPPED:
-        //                 LOG(ZDEBUG, "RET_POPPED\n", 0);
-        //                 return_zroutine(stack_pop());
-        //                 break;
-        //             case POP:
-        //                 LOG(ZDEBUG, "POP\n", 0);
-        //                 stack_pop();
-        //                 break;
-        //             case QUIT:
-        //                 LOG(ZDEBUG, "QUIT\n", 0);
-        //                 running = FALSE;
-        //                 break;
-        //             case NEW_LINE:
-        //                 LOG(ZDEBUG, "NEW_LINE\n", 0);
-        //                 glk_put_string("\n");
-        //                 break;
-        //             case SHOW_STATUS:
-        //                 LOG(ZDEBUG, "#SHOW_STATUS\n", 0);
-        //                 break;
+                    case RET_POPPED:
+                        return_zroutine(stack_pop());
+                        break;
+                    case POP:
+                        stack_pop();
+                        break;
+                    case QUIT:
+                        running = FALSE;
+                        break;
+                    case NEW_LINE:
+                        glk_put_string("\n");
+                        break;
+                    // case SHOW_STATUS:
+                    //     break;
         //             case VERIFY:
         //                 branch_op("#VERIFY", 1)
         //                 break;
@@ -258,16 +242,9 @@ int zerp_run() {
                 break;
             case COUNT_VAR:
                 switch (instruction.opcode) {
-        //             case CALL:
-        //                 store_loc = get_byte(zPC++);
-        //                 LOG(ZDEBUG, "CALL %#04x (", unpack(operands[0]));
-        //                 int i;
-        //                 for (i = 1; i < var_opcount; i++) {
-        //                     LOG(ZDEBUG, "%#s ", opdesc[i]);
-        //                 }
-        //                 LOG(ZDEBUG, ") -> %#s\n", var_name((char *)&opdesc[8], store_loc));
-        //                 call_zroutine(unpack(operands[0]), &operands[1], var_opcount - 1, store_loc);
-        //                 break;
+                    case CALL:
+                        call_zroutine(unpack(operands[0].bytes), &operands[1], store_operand);
+                        break;
         //             case STOREW:
         //                 LOG(ZDEBUG, "STOREW %#s->%#s -> %#s \n", opdesc[0], opdesc[1], opdesc[2]);
         //                 store_word(operands[0] + operands[1] * 2, operands[2])
@@ -282,32 +259,26 @@ int zerp_run() {
         //             case SREAD:
         //                 LOG(ZDEBUG, "#SREAD %#s %#s\n", opdesc[0], opdesc[1]);
         //                 break;
-        //             case PRINT_CHAR:
-        //                 LOG(ZDEBUG, "PRINT_CHAR %#s\n", opdesc[0]);
-        //                 glk_put_char(operands[0]);
-        //                 break;
-        //             case PRINT_NUM:
-        //                 LOG(ZDEBUG, "PRINT_NUM %#s\n", opdesc[0]);
-        //                 glk_printf("%d", (signed short)operands[0]);
-        //                 break;
-        //             case RANDOM:
-        //                 store_loc = get_byte(zPC++);
-        //                 LOG(ZDEBUG, "RANDOM %#s -> %#s\n", opdesc[0], var_name((char *)&opdesc[8], store_loc));
-        //                 if ((signed short)operands[0] < 0) {
-        //                     srandom(operands[0]);
-        //                     variable_set(store_loc, 0);
-        //                 } else {
-        //                     variable_set(store_loc, random());
-        //                 }
-        //                 break;
-        //             case PUSH:
-        //                 LOG(ZDEBUG, "PUSH %#s -> SP\n", opdesc[0]);
-        //                 stack_push(operands[0]);
-        //                 break;
-        //             case PULL:
-        //                 LOG(ZDEBUG, "#PULL SP -> %#s\n", opdesc[0]);
-        //                 variable_set(operands[0], stack_pop);
-        //                 break;
+                    case PRINT_CHAR:
+                        glk_put_char(operands[0].bytes);
+                        break;
+                    case PRINT_NUM:
+                        glk_printf("%d", (signed short)operands[0].bytes);
+                        break;
+                    case RANDOM:
+                        if ((signed short)operands[0].bytes < 0) {
+                            srandom(operands[0].bytes);
+                            variable_set(store_operand, 0);
+                        } else {
+                            variable_set(store_operand, random());
+                        }
+                        break;
+                    case PUSH:
+                        stack_push(operands[0].bytes);
+                        break;
+                    case PULL:
+                        variable_set(operands[0].bytes, stack_pop);
+                        break;
         //             case SPLIT_WINDOW:
         //                 LOG(ZDEBUG, "#SPLIT_WINDOW %#s\n", opdesc[0]);
         //                 break;
@@ -336,15 +307,13 @@ int zerp_run() {
     free(zCallStack);
 }
 
-#ifdef DEBUG
-char *var_name(char *opstr, unsigned char byte) {
-    if (byte == 0) {
-        snprintf(opstr, 16, "SP");
-    } else if (byte < 0x10) {
-        snprintf(opstr, 16, "L%02x", byte - 1);
-    } else {
-        snprintf(opstr, 16, "G%02x", byte - 0x10);
+static int test_je(zword_t value, zoperand_t *operands) {
+    int result = FALSE;
+    
+    while (!result || operands->type != NONE) {
+        result = get_operand_ptr(operands) == value;
+        operands++;        
     }
-    return opstr;
+        
+    return result;
 }
-#endif

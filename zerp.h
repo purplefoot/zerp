@@ -24,7 +24,7 @@
 #define ZDEBUG          3
 #define ZCRAZY          4
 
-#define DEBUG           1
+#define DEBUG           3
 
 #ifdef DEBUG
 #define LOG(level, fmt, ...) \
@@ -126,28 +126,14 @@ extern winid_t mainwin;
 extern winid_t statuswin;
 
 /* Some large macros to keep opcode stuff in line in the main loop */
-#define branch_op(debug_string, test) LOG(ZDEBUG, debug_string, opdesc[0], opdesc[1], opdesc[2], opdesc[3]); \
-branch = get_byte(zPC++); \
-LOG(ZDEBUG, ", [%s] ", branch >> 7 & 1 ? "TRUE" : "FALSE"); \
-if (!(branch >> 6 & 1)) { \
-    branch_long = get_byte(zPC++); \
-    boffset = branch & 0x1f; \
-    boffset = boffset << 8 | branch_long; \
-    boffset &= 0x1fff; \
-    boffset |= (branch >> 6 & 1) << 15; \
-} else { \
-    boffset = branch & 0x3f; \
-} \
-if (boffset < 2) { \
-    LOG(ZDEBUG, "%s\n", boffset ? "RTRUE" : "RFALSE"); \
-} else { \
-    LOG(ZDEBUG, " %04x\n", zPC + boffset - 2); \
-} \
-if ((test) ^ !(branch >> 7 & 1)) { \
-    if (boffset < 2) { \
-        return_zroutine(boffset); \
+#define get_operand(opnum) (operands[opnum].type == VARIABLE ? variable_get(operands[opnum].bytes) : operands[opnum].bytes)
+#define get_operand_ptr(op_ptr) (op_ptr->type == VARIABLE ? variable_get(op_ptr->bytes) : op_ptr->bytes)
+
+#define branch_op(branch_test) if ((branch_test) ^ !(branch_operand.test)) { \
+    if (branch_operand.offset == 0 || branch_operand.offset == 1) { \
+        return_zroutine(branch_operand.offset); \
     } else { \
-        zPC += operands[0] - 2; \
+        zPC += branch_operand.offset - 2; \
     } \
 } 
 

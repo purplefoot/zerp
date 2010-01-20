@@ -5,6 +5,7 @@
 
 #include "glk.h"
 #include "zerp.h"
+#include "opcodes.h"
 #include "stack.h"
 
 int stack_push(zword_t value) {
@@ -12,6 +13,7 @@ int stack_push(zword_t value) {
         fatal_error("Value stack overflow!\n");
     }
     *(zSP++) = value;
+    LOG(ZDEBUG, "\nPush %04x", value); 
     return value;
 }
 
@@ -21,12 +23,13 @@ zword_t stack_pop() {
         fatal_error("Value stack underflow!\n");
     }
     value =  *(--zSP);
+    LOG(ZDEBUG, "\nPop %04x", value); 
     return value;
 }
 
-zstack_frame_t * call_zroutine(packed_addr_t address, zword_t *operands, int opcount, zbyte_t ret_value){
+zstack_frame_t * call_zroutine(packed_addr_t address, zoperand_t *operands, zbyte_t ret_value){
     zbyte_t local_count;
-    int i;
+    int i = 0;
     
     if (address == 0) {
         variable_set(ret_value, 0);
@@ -45,8 +48,8 @@ zstack_frame_t * call_zroutine(packed_addr_t address, zword_t *operands, int opc
         address += 2;        
     }
     
-    for (i = 0; i < opcount; i++)
-        zFP->locals[i] = operands[i];
+    while (operands->type != NONE)
+        zFP->locals[i++] = operands++->bytes;
     
     zPC = address;
     
