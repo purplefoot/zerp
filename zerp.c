@@ -29,13 +29,12 @@ char *var_name(char *opstr, unsigned char byte);
 
 /* main interpreter entrypoint */
 int zerp_run() {
-    zbyte_t op, store_loc, branch, branch_long;
-    int opsize, opcode, opcount, var_opcount, running;
     zinstruction_t instruction;
     zoperand_t operands[8];
     zbranch_t branch_operand;
     zword_t store_operand;
-    signed short boffset;
+    packed_addr_t instructionPC;
+    int running;
 
 
     /* intialise the stack and pc */
@@ -53,19 +52,20 @@ int zerp_run() {
     zFP->sp = zSP;
     zPC = get_word(PC_INITIAL);
     zGlobals = get_word(GLOBALS);
-        
+
+    running = TRUE;
     LOG(ZDEBUG,"Running...\n", 0);
     
-    running = TRUE;
-    
     while (running) {
+        instructionPC = zPC;
         memset(&instruction, 0, sizeof(zinstruction_t));
         memset(&operands, 0, sizeof(zoperand_t) * 8);
         memset(&branch_operand, 0, sizeof(zbranch_t));
         
         zPC += decode_instruction(zPC, &instruction, operands, &store_operand, &branch_operand);
-                        
-        // debug_monitor();
+
+        print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
+        // debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
 
         // switch (opcount) {
         //     case COUNT_2OP:

@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "glk.h"
 #include "zerp.h"
 #include "opcodes.h"
@@ -243,4 +244,181 @@ static void decode_branch_op(packed_addr_t *pc, zinstruction_t *instruction, zbr
 static void decode_store_op(packed_addr_t *pc, zinstruction_t *instruction, zword_t *store) {
     instruction->store_flag = TRUE;
     *store = get_byte((*pc)++);
+}
+
+void print_zinstruction(packed_addr_t *instructionPC, zinstruction_t *instruction, zoperand_t *operands,
+                        zword_t *store_operand, zbranch_t *branch_operand, int flags) {
+    zoperand_t *op_ptr;
+    char buf[32];
+    int bytes_printed;
+
+    glk_printf("%5x: ", instructionPC);
+    if (!(flags & NO_BYTES)) {
+        bytes_printed = 0;
+
+        if (instruction->size == OP_VARIABLE) {
+            glk_printf(" %02x %02x", instruction->bytes >> 8, instruction->bytes & 0xff);
+            bytes_printed += 2;
+        } else {
+            glk_printf(" %02x", instruction->bytes);
+            bytes_printed++;
+        }
+
+        op_ptr = operands;
+        while(op_ptr->type != NONE) {
+            if (op_ptr->type == LARGE_CONST) {
+                glk_printf(" %02x %02x", op_ptr->bytes >> 8, op_ptr->bytes & 0xff);
+                bytes_printed += 2;
+            } else {
+                glk_printf(" %02x", op_ptr->bytes);
+                bytes_printed++;
+            }
+            op_ptr++;
+        }
+
+        if (instruction->store_flag){
+            glk_printf(" %02x", *store_operand);
+            bytes_printed++;
+        }
+        if (instruction->branch_flag) {
+            if (branch_operand->type == BRANCH_LONG) {
+                glk_printf(" %02x %02x", branch_operand->bytes >> 8, branch_operand->bytes & 0xff);
+                bytes_printed += 2;
+            } else {
+                glk_printf(" %02x", branch_operand->bytes);
+                bytes_printed++;
+            }
+        }
+        for (bytes_printed = 36 -(bytes_printed * 3); bytes_printed > 0; bytes_printed--)
+            glk_put_string(" ");
+    }
+
+    glk_printf(" %-16s", opcode_name(buf, instruction->count, instruction->opcode));
+
+    op_ptr = operands;
+    while(op_ptr->type != NONE) {
+        switch (op_ptr->type) {
+            case LARGE_CONST: glk_printf("#%04x", op_ptr->bytes); break;
+            case SMALL_CONST: glk_printf("#%02x", op_ptr->bytes); break;
+            case VARIABLE: print_variable(op_ptr->bytes, PRINT_READ); break;
+        }
+        op_ptr++;
+        if (op_ptr->type != NONE)
+            glk_put_string(",");
+    }
+
+    if (instruction->store_flag){
+        glk_put_string(" -> ");
+        print_variable(*store_operand, PRINT_STORE);
+    }
+
+    if (instruction->branch_flag) {
+        glk_printf(" [%s]", branch_operand->flag ? "TRUE" : "FALSE");
+        glk_printf(" %04x", (zPC + branch_operand->offset) - 2);
+    }
+
+    glk_put_string("\n");
+
+}
+
+static void print_variable(zbyte_t number, int flags) {
+    if (number == 0) {
+        flags & PRINT_READ ? glk_printf("(SP)+") : glk_printf("-(SP)");
+    } else if (number > 0 && number < 0x10) {
+        glk_printf("L%02x", number - 1);
+    } else {
+        glk_printf("G%02x", number - 0x10);
+    }
+}
+
+static char * opcode_name(char *buf, zbyte_t opcount, zbyte_t opcode) {
+    switch (opcount) {
+        case COUNT_2OP:
+            switch (opcode) {
+                case JE: strcpy(buf, "JE"); break;
+                case JL: strcpy(buf, "JL"); break;
+                case JG: strcpy(buf, "JG"); break;
+                case DEC_CHK: strcpy(buf, "DEC_CHK"); break;
+                case INC_CHK: strcpy(buf, "INC_CHK"); break;
+                case JIN: strcpy(buf, "JIN"); break;
+                case TEST: strcpy(buf, "TEST"); break;
+                case OR: strcpy(buf, "OR"); break;
+                case AND: strcpy(buf, "AND"); break;
+                case TEST_ATTR: strcpy(buf, "TEST_ATTR"); break;
+                case SET_ATTR: strcpy(buf, "SET_ATTR"); break;
+                case CLEAR_ATTR: strcpy(buf, "CLEAR_ATTR"); break;
+                case STORE: strcpy(buf, "STORE"); break;
+                case INSERT_OBJ: strcpy(buf, "INSERT_OBJ"); break;
+                case LOADW: strcpy(buf, "LOADW"); break;
+                case LOADB: strcpy(buf, "LOADB"); break;
+                case GET_PROP: strcpy(buf, "GET_PROP"); break;
+                case GET_PROP_ADDR: strcpy(buf, "GET_PROP_ADDR"); break;
+                case GET_NEXT_PROP: strcpy(buf, "GET_NEXT_PROP"); break;
+                case ADD: strcpy(buf, "ADD"); break;
+                case SUB: strcpy(buf, "SUB"); break;
+                case MUL: strcpy(buf, "MUL"); break;
+                case DIV: strcpy(buf, "DIV"); break;
+                case MOD: strcpy(buf, "MOD"); break;
+            }
+            break;
+        case COUNT_1OP:
+            switch (opcode) {
+                case JZ: strcpy(buf, "JZ"); break;
+                case GET_SIBLING: strcpy(buf, "GET_SIBLING"); break;
+                case GET_CHILD: strcpy(buf, "GET_CHILD"); break;
+                case GET_PARENT: strcpy(buf, "GET_PARENT"); break;
+                case GET_PROP_LEN: strcpy(buf, "GET_PROP_LEN"); break;
+                case INC: strcpy(buf, "INC"); break;
+                case DEC: strcpy(buf, "DEC"); break;
+                case PRINT_ADDR: strcpy(buf, "PRINT_ADDR"); break;
+                case REMOVE_OBJ: strcpy(buf, "REMOVE_OBJ"); break;
+                case PRINT_OBJ: strcpy(buf, "PRINT_OBJ"); break;
+                case RET: strcpy(buf, "RET"); break;
+                case JUMP: strcpy(buf, "JUMP"); break;
+                case PRINT_PADDR: strcpy(buf, "PRINT_PADDR"); break;
+                case LOAD: strcpy(buf, "LOAD"); break;
+                case NOT: strcpy(buf, "NOT"); break;
+            }
+            break;
+        case COUNT_0OP:
+            switch (opcode) {
+                case RTRUE: strcpy(buf, "RTRUE"); break;
+                case RFALSE: strcpy(buf, "RFALSE"); break;
+                case PRINT: strcpy(buf, "PRINT"); break;
+                case PRINT_RET: strcpy(buf, "PRINT_RET"); break;
+                case NOP: strcpy(buf, "NOP"); break;
+                case SAVE: strcpy(buf, "SAVE"); break;
+                case RESTORE: strcpy(buf, "RESTORE"); break;
+                case RESTART: strcpy(buf, "RESTART"); break;
+                case RET_POPPED: strcpy(buf, "RET_POPPED"); break;
+                case POP: strcpy(buf, "POP"); break;
+                case QUIT: strcpy(buf, "QUIT"); break;
+                case NEW_LINE: strcpy(buf, "NEW_LINE"); break;
+                case SHOW_STATUS: strcpy(buf, "SHOW_STATUS"); break;
+                case VERIFY: strcpy(buf, "VERIFY"); break;
+            }
+            break;
+        case COUNT_VAR:
+            switch (opcode) {
+                case CALL: strcpy(buf, "CALL"); break;
+                case STOREW: strcpy(buf, "STOREW"); break;
+                case STOREB: strcpy(buf, "STOREB"); break;
+                case PUT_PROP: strcpy(buf, "PUT_PROP"); break;
+                case SREAD: strcpy(buf, "SREAD"); break;
+                case PRINT_CHAR: strcpy(buf, "PRINT_CHAR"); break;
+                case PRINT_NUM: strcpy(buf, "PRINT_NUM"); break;
+                case RANDOM: strcpy(buf, "RANDOM"); break;
+                case PUSH: strcpy(buf, "PUSH"); break;
+                case PULL: strcpy(buf, "PULL"); break;
+                case SPLIT_WINDOW: strcpy(buf, "SPLIT_WINDOW"); break;
+                case SET_WINDOW: strcpy(buf, "SET_WINDOW"); break;
+                case OUTPUT_STREAM: strcpy(buf, "OUTPUT_STREAM"); break;
+                case INPUT_STREAM: strcpy(buf, "INPUT_STREAM"); break;
+                case SOUND_EFFECT: strcpy(buf, "SOUND_EFFECT"); break;
+            }
+            break;
+        default:
+            strcpy(buf, "UNKNOWN"); break;
+    }
+    return buf;
 }

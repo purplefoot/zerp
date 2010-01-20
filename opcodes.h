@@ -28,12 +28,16 @@ typedef struct zbranch {
 } zbranch_t;
     
 int decode_instruction(packed_addr_t pc, zinstruction_t *instruction, zoperand_t *operands, zword_t *store, zbranch_t *branch);
+void print_zinstruction(packed_addr_t *instructionPC, zinstruction_t *instruction, zoperand_t *operands,
+    zword_t *store_operand, zbranch_t *branch_operand, int flags);
 inline static int decode_variable(packed_addr_t *pc, zinstruction_t *instruction, zbyte_t optypes, zoperand_t *operands);
 inline static int decode_short(packed_addr_t *pc, zinstruction_t *instruction, zoperand_t *operands);
 inline static int decode_long(packed_addr_t *pc, zinstruction_t *instruction, zoperand_t *operands);
 static int decode_store_branch(packed_addr_t *pc, zinstruction_t *instruction);
 static void decode_branch_op(packed_addr_t *pc, zinstruction_t *instruction, zbranch_t *branch);
 static void decode_store_op(packed_addr_t *pc, zinstruction_t *instruction, zword_t *store);
+static char * opcode_name(char *buf, zbyte_t opcount, zbyte_t opcode);
+static void print_variable(zbyte_t number, int flags);
 
 /* Z-machine opcode/operand masks */
 
@@ -130,5 +134,10 @@ static void decode_store_op(packed_addr_t *pc, zinstruction_t *instruction, zwor
 #define OUTPUT_STREAM       0x13     
 #define INPUT_STREAM        0x14     
 #define SOUND_EFFECT        0x15     
+
+/* printing flags */
+#define NO_BYTES            0x01
+#define PRINT_READ          0x02
+#define PRINT_STORE         0x04
 
 #endif /* OPCODES_H */
