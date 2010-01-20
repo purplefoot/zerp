@@ -31,7 +31,7 @@ int decode_instruction(packed_addr_t pc, zinstruction_t *instruction, zoperand_t
             opcode byte.
         */
         instruction->opcode = instruction->bytes;
-        instruction->size = OP_VARIABLE;
+        instruction->form = OP_VARIABLE;
         LOG(ZERROR, "Unsupported extended opcode %#02x @ %#04x\n", get_byte(pc++));
         decode_variable(&pc, instruction, get_byte(pc++), operands);
     } else if (instruction->bytes >> 6 == OP_VARIABLE ) {
@@ -40,7 +40,7 @@ int decode_instruction(packed_addr_t pc, zinstruction_t *instruction, zoperand_t
             In variable form, if bit 5 is 0 then the count is 2OP; if it is 1, then the count is
             VAR. The opcode number is given in the bottom 5 bits.  
         */
-        instruction->size = OP_VARIABLE;
+        instruction->form = OP_VARIABLE;
         instruction->count = (instruction->bytes >> 5) & 0x01 ? COUNT_VAR : COUNT_2OP;
         instruction->opcode = instruction->bytes & OPCODE_5BIT;
         decode_variable(&pc, instruction, get_byte(pc++), operands);   
@@ -51,10 +51,10 @@ int decode_instruction(packed_addr_t pc, zinstruction_t *instruction, zoperand_t
             this is $11 then the operand count is 0OP; otherwise, 1OP. In either case the
             opcode number is given in the bottom 4 bits.
         */
-        instruction->size = OP_SHORT;
+        instruction->form = OP_SHORT;
         instruction->count = (instruction->bytes >> 4) & 0x03 == 0x03 ? COUNT_0OP : COUNT_1OP;
         instruction->opcode = instruction->bytes & OPCODE_4BIT;
-        if (instruction->count = COUNT_1OP)
+        if (instruction->count == COUNT_1OP)
             decode_short(&pc, instruction, operands);
     } else { /* OP_LONG */
         /*
@@ -62,7 +62,7 @@ int decode_instruction(packed_addr_t pc, zinstruction_t *instruction, zoperand_t
             In long form the operand count is always 2OP. The opcode number is given in the
             bottom 5 bits.
         */
-        instruction->size = OP_LONG;
+        instruction->form = OP_LONG;
         instruction->count = COUNT_2OP;
         instruction->opcode = instruction->bytes & OPCODE_5BIT;
         decode_long(&pc, instruction, operands);
@@ -246,17 +246,17 @@ static void decode_store_op(packed_addr_t *pc, zinstruction_t *instruction, zwor
     *store = get_byte((*pc)++);
 }
 
-void print_zinstruction(packed_addr_t *instructionPC, zinstruction_t *instruction, zoperand_t *operands,
+void print_zinstruction(packed_addr_t instructionPC, zinstruction_t *instruction, zoperand_t *operands,
                         zword_t *store_operand, zbranch_t *branch_operand, int flags) {
     zoperand_t *op_ptr;
     char buf[32];
     int bytes_printed;
 
-    glk_printf("%5x: ", instructionPC);
+    glk_printf("\n%5x: ", instructionPC);
     if (!(flags & NO_BYTES)) {
         bytes_printed = 0;
 
-        if (instruction->size == OP_VARIABLE) {
+        if (instruction->form == OP_VARIABLE) {
             glk_printf(" %02x %02x", instruction->bytes >> 8, instruction->bytes & 0xff);
             bytes_printed += 2;
         } else {
@@ -264,16 +264,18 @@ void print_zinstruction(packed_addr_t *instructionPC, zinstruction_t *instructio
             bytes_printed++;
         }
 
-        op_ptr = operands;
-        while(op_ptr->type != NONE) {
-            if (op_ptr->type == LARGE_CONST) {
-                glk_printf(" %02x %02x", op_ptr->bytes >> 8, op_ptr->bytes & 0xff);
-                bytes_printed += 2;
-            } else {
-                glk_printf(" %02x", op_ptr->bytes);
-                bytes_printed++;
-            }
-            op_ptr++;
+        if (instruction->count != COUNT_0OP) {
+            op_ptr = operands;
+            while(op_ptr->type != NONE) {
+                if (op_ptr->type == LARGE_CONST) {
+                    glk_printf(" %02x %02x", op_ptr->bytes >> 8, op_ptr->bytes & 0xff);
+                    bytes_printed += 2;
+                } else {
+                    glk_printf(" %02x", op_ptr->bytes);
+                    bytes_printed++;
+                }
+                op_ptr++;
+            }            
         }
 
         if (instruction->store_flag){
@@ -295,16 +297,18 @@ void print_zinstruction(packed_addr_t *instructionPC, zinstruction_t *instructio
 
     glk_printf(" %-16s", opcode_name(buf, instruction->count, instruction->opcode));
 
-    op_ptr = operands;
-    while(op_ptr->type != NONE) {
-        switch (op_ptr->type) {
-            case LARGE_CONST: glk_printf("#%04x", op_ptr->bytes); break;
-            case SMALL_CONST: glk_printf("#%02x", op_ptr->bytes); break;
-            case VARIABLE: print_variable(op_ptr->bytes, PRINT_READ); break;
+    if (instruction->count != COUNT_0OP) {
+        op_ptr = operands;
+        while(op_ptr->type != NONE) {
+            switch (op_ptr->type) {
+                case LARGE_CONST: glk_printf("#%04x", op_ptr->bytes); break;
+                case SMALL_CONST: glk_printf("#%02x", op_ptr->bytes); break;
+                case VARIABLE: print_variable(op_ptr->bytes, PRINT_READ); break;
+            }
+            op_ptr++;
+            if (op_ptr->type != NONE)
+                glk_put_string(",");
         }
-        op_ptr++;
-        if (op_ptr->type != NONE)
-            glk_put_string(",");
     }
 
     if (instruction->store_flag){
@@ -316,8 +320,6 @@ void print_zinstruction(packed_addr_t *instructionPC, zinstruction_t *instructio
         glk_printf(" [%s]", branch_operand->flag ? "TRUE" : "FALSE");
         glk_printf(" %04x", (zPC + branch_operand->offset) - 2);
     }
-
-    glk_put_string("\n");
 
 }
 

@@ -67,9 +67,9 @@ int zerp_run() {
         print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
         // debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
 
-        // switch (opcount) {
-        //     case COUNT_2OP:
-        //         switch (opcode) {
+        switch (instruction.count) {
+            case COUNT_2OP:
+                switch (instruction.opcode) {
         //             case JE:
         //                 branch_op("#JE %#s : %#s %#s %#s", operands[0] == operands[1])
         //                 break;
@@ -143,10 +143,10 @@ int zerp_run() {
         //             case MOD:
         //                 store_op("MOD %#s %% %#s", (signed short)operands[0] % (signed short)operands[1])
         //                 break;
-        //         }
-        //         break;
-        //     case COUNT_1OP:
-        //         switch (opcode) {
+                }
+                break;
+            case COUNT_1OP:
+                switch (instruction.opcode) {
         //             case JZ:
         //                 branch_op("JZ %#s", operands[0] == 0)
         //                 break;
@@ -200,10 +200,10 @@ int zerp_run() {
         //             case NOT:
         //                 store_op("NOT !%#s", ~operands[0])
         //                 break;
-        //         }
-        //         break;
-        //     case COUNT_0OP:
-        //         switch (opcode) {
+                }
+                break;
+            case COUNT_0OP:
+                switch (instruction.opcode) {
         //             case RTRUE:
         //                 LOG(ZDEBUG, "RTRUE\n", 0);
         //                 return_zroutine(1);
@@ -212,18 +212,14 @@ int zerp_run() {
         //                 LOG(ZDEBUG, "RFALSE\n", 0);
         //                 return_zroutine(0);
         //                 break;
-        //             case PRINT:
-        //                 LOG(ZDEBUG, "PRINT \"", 0);
-        //                 zPC += print_zstring(zPC);
-        //                 LOG(ZDEBUG, "\"\n", 0);
-        //                 break;
-        //             case PRINT_RET:
-        //                 LOG(ZDEBUG, "PRINT_RET \"", 0);
-        //                 zPC += print_zstring(zPC);
-        //                 LOG(ZDEBUG, "\"\n", 0);
-        //                 glk_put_string("\n");
-        //                 return_zroutine(1);
-        //                 break;
+                    case PRINT:
+                        zPC += print_zstring(zPC);
+                        break;
+                    case PRINT_RET:
+                        zPC += print_zstring(zPC);
+                        glk_put_string("\n");
+                        // return_zroutine(1);
+                        break;
         //             case NOP:
         //                 LOG(ZDEBUG, "NOP\n", 0);
         //                 break;
@@ -258,10 +254,10 @@ int zerp_run() {
         //             case VERIFY:
         //                 branch_op("#VERIFY", 1)
         //                 break;
-        //         }
-        //         break;
-        //     case COUNT_VAR:
-        //         switch (opcode) {
+                }
+                break;
+            case COUNT_VAR:
+                switch (instruction.opcode) {
         //             case CALL:
         //                 store_loc = get_byte(zPC++);
         //                 LOG(ZDEBUG, "CALL %#04x (", unpack(operands[0]));
@@ -327,12 +323,12 @@ int zerp_run() {
         //             case SOUND_EFFECT:
         //                 LOG(ZDEBUG, "#SOUND_EFFECT %#s\n", opdesc[0]);
         //                 break;
-        //         }
-        //         break;
-        //     default:
-        //         LOG(ZERROR, "Unknown opcode: %#x", op);
-        //         glk_put_string("ABORT: Unknown Z-machine opcode.");
-        // }
+                }
+                break;
+            default:
+                LOG(ZERROR, "Unknown opcode: %#x", instruction.opcode);
+                fatal_error("Unknown Z-machine opcode.");
+        }
     }
     
     /* Done, so clean up */

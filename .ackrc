@@ -1,0 +1,4 @@
+--ignore-dir=ztools
+--ignore-dir=glkterm
+--ignore-dir=cheapglk
+--ignore-dir=test

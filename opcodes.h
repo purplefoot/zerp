@@ -9,7 +9,7 @@
 typedef struct zinstruction {
     zword_t bytes;
     zbyte_t opcode;
-    zbyte_t size;
+    zbyte_t form;
     zbyte_t count;
     zbyte_t store_flag;
     zbyte_t branch_flag;
@@ -28,7 +28,7 @@ typedef struct zbranch {
 } zbranch_t;
     
 int decode_instruction(packed_addr_t pc, zinstruction_t *instruction, zoperand_t *operands, zword_t *store, zbranch_t *branch);
-void print_zinstruction(packed_addr_t *instructionPC, zinstruction_t *instruction, zoperand_t *operands,
+void print_zinstruction(packed_addr_t instructionPC, zinstruction_t *instruction, zoperand_t *operands,
     zword_t *store_operand, zbranch_t *branch_operand, int flags);
 inline static int decode_variable(packed_addr_t *pc, zinstruction_t *instruction, zbyte_t optypes, zoperand_t *operands);
 inline static int decode_short(packed_addr_t *pc, zinstruction_t *instruction, zoperand_t *operands);
