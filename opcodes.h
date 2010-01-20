@@ -6,7 +6,37 @@
 #ifndef OPCODES_H
 #define OPCODES_H
 
+typedef struct zinstruction {
+    zword_t bytes;
+    zbyte_t opcode;
+    zbyte_t size;
+    zbyte_t count;
+    zbyte_t store_flag;
+    zbyte_t branch_flag;
+} zinstruction_t;
+
+typedef struct zoperand {
+    zword_t bytes;
+    zbyte_t type;
+} zoperand_t;
+
+typedef struct zbranch {
+    zword_t bytes;
+    zbyte_t type;
+    zbyte_t flag;
+    signed short offset;
+} zbranch_t;
+    
+int decode_instruction(packed_addr_t pc, zinstruction_t *instruction, zoperand_t *operands, zword_t *store, zbranch_t *branch);
+inline static int decode_variable(packed_addr_t *pc, zinstruction_t *instruction, zbyte_t optypes, zoperand_t *operands);
+inline static int decode_short(packed_addr_t *pc, zinstruction_t *instruction, zoperand_t *operands);
+inline static int decode_long(packed_addr_t *pc, zinstruction_t *instruction, zoperand_t *operands);
+static int decode_store_branch(packed_addr_t *pc, zinstruction_t *instruction);
+static void decode_branch_op(packed_addr_t *pc, zinstruction_t *instruction, zbranch_t *branch);
+static void decode_store_op(packed_addr_t *pc, zinstruction_t *instruction, zword_t *store);
+
 /* Z-machine opcode/operand masks */
+
 #define LARGE_CONST         0x0
 #define SMALL_CONST         0x1
 #define VARIABLE            0x2
@@ -24,6 +54,9 @@
 
 #define OPCODE_4BIT         0x0f
 #define OPCODE_5BIT         0x1f
+
+#define BRANCH_SHORT        0x1
+#define BRANCH_LONG         0x2
 
 /* 2OP codes */
 #define JE                  0x01
