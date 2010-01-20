@@ -110,7 +110,11 @@ inline static int decode_variable(packed_addr_t *pc, zinstruction_t* instruction
     In short form, bits 4 and 5 of the opcode give the type.
 */
 inline static int decode_short(packed_addr_t *pc, zinstruction_t *instruction, zoperand_t *operands) {
-    switch ((instruction->bytes >> 4) & 0x3) {
+    int optype;
+    
+    optype = (instruction->bytes >> 4) & 0x3;
+    operands->type = optype;
+    switch (optype) {
         case LARGE_CONST:
             (operands++)->bytes = get_word((*pc)++);
             (*pc)++;
@@ -297,20 +301,52 @@ void print_zinstruction(packed_addr_t instructionPC, zinstruction_t *instruction
 
     glk_printf(" %-16s", opcode_name(buf, instruction->count, instruction->opcode));
 
-    if (instruction->count != COUNT_0OP) {
-        op_ptr = operands;
-        while(op_ptr->type != NONE) {
-            switch (op_ptr->type) {
-                case LARGE_CONST: glk_printf("#%04x", op_ptr->bytes); break;
-                case SMALL_CONST: glk_printf("#%02x", op_ptr->bytes); break;
-                case VARIABLE: print_variable(op_ptr->bytes, PRINT_READ); break;
-            }
-            op_ptr++;
-            if (op_ptr->type != NONE)
-                glk_put_string(",");
-        }
-    }
+    // if (instruction->count != COUNT_0OP)
+    //     print_operand_list(operands);
 
+    /* some instructions have special formats for their opcodes, otherwise just list them */
+    switch (instruction->count) {
+        case COUNT_2OP:
+            switch (instruction->opcode) {
+                case STORE:
+                    print_variable(operands->bytes, 0);
+                    glk_put_string(",");
+                    print_operand(operands + 1);
+                    break;
+                default: print_operand_list(operands); break;
+            }
+            break;
+        case COUNT_1OP:
+            switch (instruction->opcode) {
+                default: print_operand_list(operands); break;
+            }
+            break;
+        case COUNT_0OP:
+            switch (instruction->opcode) {
+                case PRINT:
+                case PRINT_RET:
+                    glk_put_string("\"");
+                    print_zstring(zPC);
+                    glk_put_string("\"\n");
+                    break;
+                default: break;
+            }
+            break;
+        case COUNT_VAR:
+            switch (instruction->opcode) {
+                case CALL:
+                    glk_printf("%x", unpack(operands->bytes));
+                    if ((operands + 1)->type != NONE) {
+                        glk_put_string(" (");
+                        print_operand_list(operands + 1);
+                        glk_put_string(")");
+                    }
+                    break;
+                default: print_operand_list(operands); break;
+            }
+            break;
+    }
+    
     if (instruction->store_flag){
         glk_put_string(" -> ");
         print_variable(*store_operand, PRINT_STORE);
@@ -321,6 +357,23 @@ void print_zinstruction(packed_addr_t instructionPC, zinstruction_t *instruction
         glk_printf(" %04x", (zPC + branch_operand->offset) - 2);
     }
 
+}
+
+static void print_operand(zoperand_t *op_ptr) {
+    switch (op_ptr->type) {
+        case LARGE_CONST: glk_printf("#%04x", op_ptr->bytes); break;
+        case SMALL_CONST: glk_printf("#%02x", op_ptr->bytes); break;
+        case VARIABLE: print_variable(op_ptr->bytes, PRINT_READ); break;
+    }
+}
+
+static void print_operand_list(zoperand_t *op_ptr) {
+    while(op_ptr->type != NONE) {
+        print_operand(op_ptr);
+        op_ptr++;
+        if (op_ptr->type != NONE)
+            glk_put_string(",");
+    }
 }
 
 static void print_variable(zbyte_t number, int flags) {

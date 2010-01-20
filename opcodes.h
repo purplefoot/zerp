@@ -38,6 +38,8 @@ static void decode_branch_op(packed_addr_t *pc, zinstruction_t *instruction, zbr
 static void decode_store_op(packed_addr_t *pc, zinstruction_t *instruction, zword_t *store);
 static char * opcode_name(char *buf, zbyte_t opcount, zbyte_t opcode);
 static void print_variable(zbyte_t number, int flags);
+static void print_operand(zoperand_t *op_ptr);
+static void print_operand_list(zoperand_t *op_ptr);
 
 /* Z-machine opcode/operand masks */
 
