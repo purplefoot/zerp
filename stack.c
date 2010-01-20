@@ -12,17 +12,18 @@ int stack_push(zword_t value) {
     if (zSP >= zStackTop) {
         fatal_error("Value stack overflow!\n");
     }
-    *(zSP++) = value;
+    *(++zSP) = value;
     LOG(ZDEBUG, "\nPush %04x", value); 
     return value;
 }
 
 zword_t stack_pop() {
     zword_t value;
+
     if (zSP == zFP->sp) {
         fatal_error("Value stack underflow!\n");
     }
-    value =  *(--zSP);
+    value =  *(zSP--);
     LOG(ZDEBUG, "\nPop %04x", value); 
     return value;
 }

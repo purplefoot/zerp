@@ -19,7 +19,7 @@
 
 /* event parsing loop freely stolen from Zarf's glk example code */
 void debug_monitor() {
-    char commandbuf[256];
+    char commandbuf[256], lastcommand[256];
     char *cx, *cmd;
     int gotline, len, monitor, match;
     event_t ev;
@@ -33,6 +33,8 @@ void debug_monitor() {
     monitor = TRUE;
     while(monitor) {
         glk_put_string("\nmonitor>");
+        // if (cmd)
+        //     strncpy(lastcommand, cmd, 256);
         glk_request_line_event(mainwin, commandbuf, 255, 0);
         gotline = FALSE;
         while (!gotline) {
@@ -54,6 +56,11 @@ void debug_monitor() {
         for (cx = commandbuf+len-1; cx >= cmd && *cx == ' '; cx--) { };
         *(cx+1) = '\0';
         
+        if (*cmd == '\0') {
+            monitor = FALSE;
+            continue;
+        }
+        
         if ((match = regcomp(&preg, parser, REG_EXTENDED | REG_ICASE)) != 0) {
             fatal_error("Bad regex\n");
         }
@@ -73,8 +80,8 @@ void debug_monitor() {
                 match_args_and_call(debug_print_local, 0xff)
             } else if (match_command("n")) {
                 monitor = FALSE;                
-                } else if (match_command("x")) {
-                    match_args_and_call(debug_print_memory, 0xdeadbeef)
+            } else if (match_command("x")) {
+                match_args_and_call(debug_print_memory, 0xdeadbeef)
             } else if (match_command("")) {
                 match_args_and_call(debug_print_zstring, 0)
             } else if (match_command("q")) {
@@ -90,7 +97,52 @@ void debug_monitor() {
 }
 
 static void debug_print_callstack(int frame) {
-    glk_put_string("print callstack\n");
+    int i, count;
+    zstack_frame_t *aframe;
+    zword_t *stack_top, *stack_bottom;
+    
+    if (frame == 0xffff) {
+        i = zFP - zCallStack;
+        while (i >= 0) {
+            aframe = zCallStack + i;
+            glk_printf("%2d (%08x): pc:%05x sp:%08x ret:", i, aframe, aframe->pc, aframe->sp);
+            if (aframe->ret_value == 0) {
+                glk_put_string("SP");
+            } else if (aframe->ret_value > 0 && aframe->ret_value < 0x10) {
+                glk_printf("L%02x", aframe->ret_value - 1);
+            } else {
+                glk_printf("G%02x", aframe->ret_value - 0x10);
+            }
+            glk_put_string("\n"); i--;
+        }
+    } else {
+        if (frame < 0 || frame > zFP - zCallStack) {
+            glk_put_string("Invalid call frame.\n");
+            return;
+        }
+        aframe = zCallStack + frame;
+        glk_printf("Call frame %2d (%08x):\n pc:%05x\n sp:%08x - ", frame, aframe, aframe->pc, aframe->sp);
+        if (frame > 0) {
+            stack_top = aframe->sp; stack_bottom = (zCallStack + (frame -1))->sp;
+            count = 0;
+            while (stack_top > stack_bottom && ++count < 6)
+                glk_printf(" %04x", *--stack_top);
+        }
+        
+        glk_put_string("\nreturn value in:");
+        if (aframe->ret_value == 0) {
+            glk_put_string("SP");
+        } else if (aframe->ret_value > 0 && aframe->ret_value < 0x10) {
+            glk_printf("L%02x", aframe->ret_value - 1);
+        } else {
+            glk_printf("G%02x", aframe->ret_value - 0x10);
+        }
+        glk_put_string("\nLocals:\n");
+        
+        for (i = 1; i < 16; i++) {
+            glk_printf("%8x", aframe->locals[i]);
+        }
+    }
 }
 
 static void debug_print_global(int number) {
@@ -162,8 +214,8 @@ static void dump_stack() {
     int empty = TRUE;
     
     s = zSP;
-    while(--s >= zFP->sp) {
-        glk_printf("%#08x : %08x\n", *s);
+    while(s > zFP->sp) {
+        glk_printf("%#08x : %04x\n", s, *s--);
         empty = FALSE;
     }
     if (empty)

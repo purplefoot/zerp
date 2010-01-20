@@ -137,10 +137,7 @@ extern winid_t statuswin;
     } \
 } 
 
-#define store_op(debug_string, store_exp) store_loc = get_byte(zPC++); \
-LOG(ZDEBUG, debug_string, opdesc[0], opdesc[1], opdesc[2], opdesc[3]); \
-LOG(ZDEBUG, " -> %#s\n", var_name((char *)&opdesc[8], store_loc)); \
-variable_set(store_loc, store_exp);
+#define store_op(store_exp) variable_set(store_operand, store_exp);
 
 #define store_branch_op(debug_string, store_exp, test) store_loc = get_byte(zPC++); \
 LOG(ZDEBUG, debug_string, opdesc[0], opdesc[1], opdesc[2], opdesc[3]); \

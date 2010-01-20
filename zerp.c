@@ -28,7 +28,7 @@ int zerp_run() {
     zinstruction_t instruction;
     zoperand_t operands[8];
     zbranch_t branch_operand;
-    zword_t store_operand;
+    zword_t store_operand, scratch1, scratch2, scratch3;
     packed_addr_t instructionPC;
     int running;
 
@@ -63,7 +63,7 @@ int zerp_run() {
         zPC += decode_instruction(zPC, &instruction, operands, &store_operand, &branch_operand);
 
         print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
-        // debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
+        debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
 
         switch (instruction.count) {
             case COUNT_2OP:
@@ -89,12 +89,12 @@ int zerp_run() {
                     case TEST:
                         branch_op(get_operand(0) & get_operand(1) == get_operand(1))
                         break;
-        //             case OR:
-        //                 store_op("OR %#s | %#s", operands[0] | operands[1])
-        //                 break;
-        //             case AND:
-        //                 store_op("AND %#s | %#s", operands[0] & operands[1])
-        //                 break;
+                    case OR:
+                        store_op(get_operand(0) | get_operand(1))
+                        break;
+                    case AND:
+                        store_op(get_operand(0) & get_operand(1))
+                        break;
         //             case TEST_ATTR:
         //                 branch_op("#TEST_ATTR %#s, %#s, ", 0)
         //                 break;
@@ -104,19 +104,18 @@ int zerp_run() {
         //             case CLEAR_ATTR:
         //                 LOG(ZDEBUG, "#CLEAR_ATTR %#s, %#s\n", opdesc[0], opdesc[1]);
         //                 break;
-        //             case STORE:
-        //                 LOG(ZDEBUG, "STORE %#s, %#s\n", var_name((char *)&opdesc[0], operands[0]), opdesc[1]);
-        //                 variable_set(operands[0], operands[1]);
-        //                 break;
+                    case STORE:
+                        variable_set(operands[0].bytes, get_operand(1));
+                        break;
         //             case INSERT_OBJ:
         //                 LOG(ZDEBUG, "#INSERT_OBJ %#s, %#s\n", opdesc[0], opdesc[1]);
         //                 break;
-        //             case LOADW:
-        //                 store_op("LOADW %#s[%#s]", get_word(operands[0] + operands[1] * 2))
-        //                 break;
-        //             case LOADB:
-        //                 store_op("LOADB %#s[%#s]", get_byte(operands[0] + operands[1]))
-        //                 break;
+                    case LOADW:
+                        store_op(get_word(get_operand(0) + get_operand(1) * 2))
+                        break;
+                    case LOADB:
+                        store_op(get_byte(get_operand(0) + get_operand(1)))
+                        break;
         //             case GET_PROP:
         //                 store_op("#GET_PROP %#s, %#s", 0xbeef)
         //                 break;
@@ -126,21 +125,21 @@ int zerp_run() {
         //             case GET_NEXT_PROP:
         //                 store_op("#GET_NEXT_PROP %#s, %#s", 0xbeef)
         //                 break;
-        //             case ADD:
-        //                 store_op("ADD %#s + %#s", (signed short)operands[0] + (signed short)operands[1])
-        //                 break;
-        //             case SUB:
-        //                 store_op("SUB %#s - %#s", (signed short)operands[0] - (signed short)operands[1])
-        //                 break;
-        //             case MUL:
-        //                 store_op("MUL %#s * %#s", (signed short)operands[0] * (signed short)operands[1])
-        //                 break;
-        //             case DIV:
-        //                 store_op("DIV %#s / %#s", (signed short)operands[0] / (signed short)operands[1])
-        //                 break;
-        //             case MOD:
-        //                 store_op("MOD %#s %% %#s", (signed short)operands[0] % (signed short)operands[1])
-        //                 break;
+                    case ADD:
+                        store_op((signed short)get_operand(0) + (signed short)get_operand(1))
+                        break;
+                    case SUB:
+                        store_op((signed short)get_operand(0) - (signed short)get_operand(1))
+                        break;
+                    case MUL:
+                        store_op((signed short)get_operand(0) * (signed short)get_operand(1))
+                        break;
+                    case DIV:
+                        store_op((signed short)get_operand(0) / (signed short)get_operand(1))
+                        break;
+                    case MOD:
+                        store_op((signed short)get_operand(0) % (signed short)get_operand(1))
+                        break;
                 }
                 break;
             case COUNT_1OP:
@@ -160,14 +159,12 @@ int zerp_run() {
         //             case GET_PROP_LEN:
         //                 store_op("#GET_PROP_LEN %#s", 0xbeef)
         //                 break;
-        //             case INC:
-        //                 LOG(ZDEBUG, "INC %#s \n", opdesc[0]);
-        //                 variable_set(operands[0], ((signed short)variable_get(operands[0])) + 1);
-        //                 break;
-        //             case DEC:
-        //                 LOG(ZDEBUG, "DEC %#s \n", opdesc[0]);
-        //                 variable_set(operands[0], ((signed short)variable_get(operands[0])) - 1);
-        //                 break;
+                    case INC:
+                        variable_set(operands[0].bytes, ((signed short)variable_get(operands[0].bytes)) + 1);
+                        break;
+                    case DEC:
+                        variable_set(operands[0].bytes, ((signed short)variable_get(operands[0].bytes)) - 1);
+                        break;
                     case PRINT_ADDR:
                         print_zstring(operands[0].bytes);
                         break;
@@ -186,12 +183,12 @@ int zerp_run() {
                     case PRINT_PADDR:
                         print_zstring(unpack(operands[0].bytes));
                         break;
-        //             case LOAD:
-        //                 store_op("#LOAD %#s", 0)
-        //                 break;
-        //             case NOT:
-        //                 store_op("NOT !%#s", ~operands[0])
-        //                 break;
+                    case LOAD:
+                        store_op(variable_get(operands[0].bytes))
+                        break;
+                    case NOT:
+                        store_op(~get_operand(0))
+                        break;
                 }
                 break;
             case COUNT_0OP:
@@ -245,14 +242,16 @@ int zerp_run() {
                     case CALL:
                         call_zroutine(unpack(operands[0].bytes), &operands[1], store_operand);
                         break;
-        //             case STOREW:
-        //                 LOG(ZDEBUG, "STOREW %#s->%#s -> %#s \n", opdesc[0], opdesc[1], opdesc[2]);
-        //                 store_word(operands[0] + operands[1] * 2, operands[2])
-        //                 break;
-        //             case STOREB:
-        //                 LOG(ZDEBUG, "STOREB %#s->%#s -> %#s \n", opdesc[0], opdesc[1], opdesc[2]);
-        //                 store_byte(operands[0] + operands[1], operands[2])
-        //                 break;
+                    case STOREW:
+                        scratch1 = get_operand(0); scratch2 = get_operand(1); scratch3 = get_operand(2);
+                        store_word(scratch1 + scratch2 * 2, scratch3);
+                        LOG(ZDEBUG, "STOREW %04x -> %04x\n", scratch1 + scratch2 * 2, scratch3)
+                        break;
+                    case STOREB:
+                        scratch1 = get_operand(0); scratch2 = get_operand(1); scratch3 = get_operand(2);
+                        store_byte(scratch1 + scratch2, scratch3)
+                        LOG(ZDEBUG, "STOREB %04x -> %04x\n", scratch1 + scratch2, scratch3)
+                        break;
         //             case PUT_PROP:
         //                 LOG(ZDEBUG, "#PUT_PROP %#s %#s -> %#s \n", opdesc[0], opdesc[1], opdesc[2]);
         //                 break;
@@ -310,8 +309,8 @@ int zerp_run() {
 static int test_je(zword_t value, zoperand_t *operands) {
     int result = FALSE;
     
-    while (!result || operands->type != NONE) {
-        result = get_operand_ptr(operands) == value;
+    while (!result && operands->type != NONE) {
+        result = (get_operand_ptr(operands) == value);
         operands++;        
     }
         
