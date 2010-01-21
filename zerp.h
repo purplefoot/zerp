@@ -44,8 +44,8 @@ typedef unsigned int packed_addr_t;
 
 #define get_byte(offset) *(zMachine + offset)
 #define store_byte(offset, value) get_byte(offset) = (zbyte_t) value;
-#define get_word(addr) (((zword_t) get_byte(addr)) << 8 | get_byte(addr + 1))
-#define store_word(offset, value) store_byte(offset, value >> 8); store_byte(offset + 1,value & 0xff);
+#define get_word(addr) ((zword_t) (get_byte(addr) << 8 | get_byte(addr + 1)))
+#define store_word(offset, value) store_byte(offset, (zbyte_t)(value >> 8)); store_byte(offset + 1, (zbyte_t)(value & 0xff));
 #define get_word_addr(addr) get_word(addr) >> 1
 #define store_word_addr(addr) store_word(addr << 1)
 #define get_packed_addr(addr) get_word(addr) << 1
