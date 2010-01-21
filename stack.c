@@ -30,6 +30,7 @@ zword_t stack_pop() {
 
 zstack_frame_t * call_zroutine(packed_addr_t address, zoperand_t *operands, zbyte_t ret_store){
     zbyte_t local_count;
+    zstack_frame_t *newFrame;
     int i = 0;
     
     if (address == 0) {
@@ -37,24 +38,27 @@ zstack_frame_t * call_zroutine(packed_addr_t address, zoperand_t *operands, zbyt
         return;
     }
     
-    if (zFP++ > zCallStackTop)
+    newFrame = zFP +1;
+    if (newFrame > zCallStackTop)
         fatal_error("Call stack overflow");
     
-    zFP->pc = zPC;
-    zFP->sp = zSP;
-    zFP->ret_store = ret_store;
+    newFrame->pc = zPC;
+    newFrame->sp = zSP;
+    newFrame->ret_store = ret_store;
     
     for (local_count = get_byte(address++); local_count > 0; local_count--) {
-        zFP->locals[local_count - 1] = get_word(address);
+        newFrame->locals[local_count - 1] = get_word(address);
         address += 2;        
     }
     
-    while (operands->type != NONE)
-        zFP->locals[i++] = operands++->bytes;
+    while (operands->type != NONE) {
+        newFrame->locals[i++] = operands->type == VARIABLE ? variable_get(operands->bytes) : operands->bytes;
+        operands++;
+    }
     
     zPC = address;
     
-    return zFP;
+    return zFP++;
 }
 
 zstack_frame_t *return_zroutine(zword_t ret_value) {

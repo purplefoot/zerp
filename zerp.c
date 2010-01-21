@@ -249,7 +249,7 @@ int zerp_run() {
             case COUNT_VAR:
                 switch (instruction.opcode) {
                     case CALL:
-                        call_zroutine(unpack(operands[0].bytes), &operands[1], store_operand);
+                        call_zroutine(unpack(get_operand(0)), &operands[1], store_operand);
                         break;
                     case STOREW:
                         scratch1 = get_operand(0); scratch2 = get_operand(1); scratch3 = get_operand(2);
