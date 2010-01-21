@@ -187,10 +187,10 @@ int zerp_run() {
                         return_zroutine(get_operand(0));
                         break;
                     case JUMP:
-                        zPC += (signed short) (operands[0].bytes - 2);
+                        zPC += (signed short) (get_operand(0) - 2);
                         break;
                     case PRINT_PADDR:
-                        print_zstring(unpack(operands[0].bytes));
+                        print_zstring(unpack(get_operand(0)));
                         break;
                     case LOAD:
                         store_op(variable_get(operands[0].bytes))
