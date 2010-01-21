@@ -175,7 +175,7 @@ int zerp_run() {
                         variable_set(operands[0].bytes, ((signed short)variable_get(operands[0].bytes)) - 1);
                         break;
                     case PRINT_ADDR:
-                        print_zstring(operands[0].bytes);
+                        print_zstring(get_operand(0));
                         break;
                     case REMOVE_OBJ:
                         remove_object(get_operand(0));
@@ -268,10 +268,10 @@ int zerp_run() {
                         glk_put_string("INPUT NOW REQUIRED");
                         break;
                     case PRINT_CHAR:
-                        glk_put_char(operands[0].bytes);
+                        glk_put_char(get_operand(0));
                         break;
                     case PRINT_NUM:
-                        glk_printf("%d", (signed short)operands[0].bytes);
+                        glk_printf("%d", (signed short)get_operand(0));
                         break;
                     case RANDOM:
                         if ((signed short)operands[0].bytes < 0) {
@@ -282,10 +282,10 @@ int zerp_run() {
                         }
                         break;
                     case PUSH:
-                        stack_push(operands[0].bytes);
+                        stack_push(get_operand(0));
                         break;
                     case PULL:
-                        variable_set(operands[0].bytes, stack_pop);
+                        variable_set(get_operand(0), stack_pop);
                         break;
         //             case SPLIT_WINDOW:
         //                 LOG(ZDEBUG, "#SPLIT_WINDOW %#s\n", opdesc[0]);
