@@ -55,7 +55,7 @@ typedef unsigned int packed_addr_t;
 typedef struct zstack_frame {
     zword_t pc;
     zword_t *sp;
-    zbyte_t ret_value;
+    zbyte_t ret_store;
     zword_t locals[16];
 } zstack_frame_t;
 

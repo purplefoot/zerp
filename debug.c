@@ -109,12 +109,12 @@ static void debug_print_callstack(int frame) {
         while (i >= 0) {
             aframe = zCallStack + i;
             glk_printf("%2d (%08x): pc:%05x sp:%08x ret:", i, aframe, aframe->pc, aframe->sp);
-            if (aframe->ret_value == 0) {
+            if (aframe->ret_store == 0) {
                 glk_put_string("SP");
-            } else if (aframe->ret_value > 0 && aframe->ret_value < 0x10) {
-                glk_printf("L%02x", aframe->ret_value - 1);
+            } else if (aframe->ret_store > 0 && aframe->ret_store < 0x10) {
+                glk_printf("L%02x", aframe->ret_store - 1);
             } else {
-                glk_printf("G%02x", aframe->ret_value - 0x10);
+                glk_printf("G%02x", aframe->ret_store - 0x10);
             }
             glk_put_string("\n"); i--;
         }
@@ -133,12 +133,12 @@ static void debug_print_callstack(int frame) {
         }
         
         glk_put_string("\nreturn value in:");
-        if (aframe->ret_value == 0) {
+        if (aframe->ret_store == 0) {
             glk_put_string("SP");
-        } else if (aframe->ret_value > 0 && aframe->ret_value < 0x10) {
-            glk_printf("L%02x", aframe->ret_value - 1);
+        } else if (aframe->ret_store > 0 && aframe->ret_store < 0x10) {
+            glk_printf("L%02x", aframe->ret_store - 1);
         } else {
-            glk_printf("G%02x", aframe->ret_value - 0x10);
+            glk_printf("G%02x", aframe->ret_store - 0x10);
         }
         glk_put_string("\nLocals:\n");
         

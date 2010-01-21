@@ -52,7 +52,7 @@ int decode_instruction(packed_addr_t pc, zinstruction_t *instruction, zoperand_t
             opcode number is given in the bottom 4 bits.
         */
         instruction->form = OP_SHORT;
-        instruction->count = (instruction->bytes >> 4) & 0x03 == 0x03 ? COUNT_0OP : COUNT_1OP;
+        instruction->count = ((instruction->bytes >> 4) & 0x03) == 0x03 ? COUNT_0OP : COUNT_1OP;
         instruction->opcode = instruction->bytes & OPCODE_4BIT;
         if (instruction->count == COUNT_1OP)
             decode_short(&pc, instruction, operands);
