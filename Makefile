@@ -37,6 +37,9 @@ $(OBJS): $(HEADERS)
 
 test: test/unittests.z3 test_int
 
+ftest:
+	frotz test/unittests.z3
+	
 test/unittests.z3: test_int test/unittests.inf
 	inform -v3 -t test/unittests.inf test/unittests.z3
 	test/czerp test/unittests.z3
