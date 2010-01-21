@@ -77,10 +77,10 @@ int zerp_run() {
                         branch_op(test_je(get_operand(0), &operands[1]))
                         break;
                     case JL:
-                        branch_op(get_operand(0) < get_operand(1))
+                        branch_op((signed short)get_operand(0) < (signed short)get_operand(1))
                         break;
                     case JG:
-                        branch_op(get_operand(0) > get_operand(1))
+                        branch_op((signed short)get_operand(0) > (signed short)get_operand(1))
                         break;
                     case DEC_CHK:
                         branch_op(variable_set(operands[0].bytes, variable_get(operands[0].bytes) - 1) < operands[1].bytes)
