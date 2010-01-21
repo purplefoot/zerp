@@ -14,6 +14,7 @@ static void debug_print_local(int number);
 static void debug_print_stack();
 static void debug_print_memory(int address);
 static void debug_print_zstring(packed_addr_t address);
+static void debug_print_object(int number);
 static void dump_stack();
 static void dump_globals();
 static void dump_locals();

@@ -7,6 +7,7 @@
 #include <string.h>
 #include "glk.h"
 #include "zerp.h"
+#include "objects.h"
 #include "debug.h"
 
 #define match_command(command) strncmp(command, cmd + pmatch[1].rm_so, 1) == 0
@@ -23,7 +24,7 @@ void debug_monitor() {
     char *cx, *cmd;
     int gotline, len, monitor, match;
     event_t ev;
-    char *parser = "^([cfghlnqsx])( +([0-9a-f]+))?";
+    char *parser = "^([cfghlnoqsx])( +([0-9a-f]+))?";
     // char *parser = "\\([cghlnqsx]\\)\\( 0\\)?";
     char *matched;
     regex_t preg;
@@ -80,6 +81,8 @@ void debug_monitor() {
                 match_args_and_call(debug_print_local, 0xff)
             } else if (match_command("n")) {
                 monitor = FALSE;                
+            } else if (match_command("o")) {
+                match_args_and_call(debug_print_object, 1);         
             } else if (match_command("x")) {
                 match_args_and_call(debug_print_memory, 0xdeadbeef)
             } else if (match_command("")) {
@@ -207,6 +210,19 @@ static void debug_print_memory(int address) {
 
 static void debug_print_zstring(packed_addr_t address) {
     print_zstring(address);
+}
+
+static void debug_print_object(int number) {
+    glk_printf("Object %d:\nName: \"", number);
+    print_object_name(number);
+    glk_put_string("\"\nAttributes:");
+    glk_printf("\nParent: %3d \"", object_parent(number));
+    print_object_name(object_parent(number));
+    glk_printf("\"\nSibling: %3d \"", object_sibling(number));
+    print_object_name(object_sibling(number));
+    glk_printf("\"\nChild: %3d \"", object_child(number));
+    print_object_name(object_child(number));
+    glk_put_string("\"\n");
 }
 
 static void dump_stack() {

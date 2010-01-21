@@ -24,7 +24,7 @@
 #define ZDEBUG          3
 #define ZCRAZY          4
 
-#define DEBUG           3
+#define DEBUG           1
 
 #ifdef DEBUG
 #define LOG(level, fmt, ...) \
@@ -78,6 +78,8 @@ extern zstack_frame_t * zCallStackTop;
 #define CALLSTACKSIZE 512
 
 extern zword_t zGlobals;
+extern zword_t zProperties;
+extern zword_t zObjects;
 
 extern packed_addr_t zPC;
 

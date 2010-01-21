@@ -10,6 +10,7 @@
 #include "zerp.h"
 #include "opcodes.h"
 #include "stack.h"
+#include "objects.h"
 #include "debug.h"
 
 zword_t * zStack = 0;
@@ -19,6 +20,8 @@ zstack_frame_t * zCallStack = 0;
 zstack_frame_t * zFP = 0;
 zstack_frame_t * zCallStackTop = 0;
 zword_t zGlobals = 0;
+zword_t zProperties = 0;
+zword_t zObjects = 0;
 packed_addr_t zPC = 0;
 
 static int test_je(zword_t value, zoperand_t *operands);
@@ -48,7 +51,9 @@ int zerp_run() {
     zFP->sp = zSP;
     zPC = get_word(PC_INITIAL);
     zGlobals = get_word(GLOBALS);
-
+    zProperties = get_word(OBJECT_TABLE);
+    zObjects = zProperties + 62;
+    
     running = TRUE;
     LOG(ZDEBUG,"Running...\n", 0);
     
@@ -62,8 +67,8 @@ int zerp_run() {
         
         zPC += decode_instruction(zPC, &instruction, operands, &store_operand, &branch_operand);
 
-        print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
-        debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
+        // print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
+        // debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
 
         switch (instruction.count) {
             case COUNT_2OP:
@@ -83,9 +88,9 @@ int zerp_run() {
                     case INC_CHK:
                         branch_op(variable_set(operands[0].bytes, variable_get(operands[0].bytes) + 1) > operands[1].bytes)
                         break;
-        //             case JIN:
-        //                 branch_op("#JIN %#s in %#s", 0)
-        //                 break;
+                    case JIN:
+                        branch_op(object_in(get_operand(0), get_operand(1)))
+                        break;
                     case TEST:
                         branch_op(get_operand(0) & get_operand(1) == get_operand(1))
                         break;
@@ -147,15 +152,19 @@ int zerp_run() {
                     case JZ:
                         branch_op(get_operand(0) == 0)
                         break;
-        //             case GET_SIBLING:
-        //                 store_branch_op("#GET_SIBLING %#s", 0xbeef, 0)
-        //                 break;
-        //             case GET_CHILD:
-        //                 store_branch_op("#GET_CHILD %#s", 0xbeef, 0)
-        //                 break;
-        //             case GET_PARENT:
-        //                 store_op("#GET_PARENT %#s", 0xbeef)
-        //                 break;
+                    case GET_SIBLING:
+                        scratch1 = object_sibling(get_operand(0));
+                        store_op(scratch1)
+                        branch_op(scratch1 != 0)
+                        break;
+                    case GET_CHILD:
+                        scratch1 = object_child(get_operand(0));
+                        store_op(scratch1)
+                        branch_op(scratch1 != 0)
+                        break;
+                    case GET_PARENT:
+                        store_op(object_parent(get_operand(0)))
+                        break;
         //             case GET_PROP_LEN:
         //                 store_op("#GET_PROP_LEN %#s", 0xbeef)
         //                 break;
@@ -168,12 +177,12 @@ int zerp_run() {
                     case PRINT_ADDR:
                         print_zstring(operands[0].bytes);
                         break;
-        //             case REMOVE_OBJ:
-        //                 LOG(ZDEBUG, "#REMOVE_OBJ %#s \n", opdesc[0]);
-        //                 break;
-        //             case PRINT_OBJ:
-        //                 LOG(ZDEBUG, "#PRINT_OBJ %#s \n", opdesc[0]);
-        //                 break;
+                    case REMOVE_OBJ:
+                        remove_object(get_operand(0));
+                        break;
+                    case PRINT_OBJ:
+                        print_object_name(get_operand(0));
+                        break;
                     case RET:
                         return_zroutine(get_operand(0));
                         break;
@@ -255,9 +264,9 @@ int zerp_run() {
         //             case PUT_PROP:
         //                 LOG(ZDEBUG, "#PUT_PROP %#s %#s -> %#s \n", opdesc[0], opdesc[1], opdesc[2]);
         //                 break;
-        //             case SREAD:
-        //                 LOG(ZDEBUG, "#SREAD %#s %#s\n", opdesc[0], opdesc[1]);
-        //                 break;
+                    case SREAD:
+                        glk_put_string("INPUT NOW REQUIRED");
+                        break;
                     case PRINT_CHAR:
                         glk_put_char(operands[0].bytes);
                         break;
