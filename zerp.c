@@ -114,15 +114,15 @@ int zerp_run() {
                     case AND:
                         store_op(get_operand(0) & get_operand(1))
                         break;
-        //             case TEST_ATTR:
-        //                 branch_op("#TEST_ATTR %#s, %#s, ", 0)
-        //                 break;
-        //             case SET_ATTR:
-        //                 LOG(ZDEBUG, "#SET_ATTR %#s, %#s\n", opdesc[0], opdesc[1]);
-        //                 break;
-        //             case CLEAR_ATTR:
-        //                 LOG(ZDEBUG, "#CLEAR_ATTR %#s, %#s\n", opdesc[0], opdesc[1]);
-        //                 break;
+                    case TEST_ATTR:
+                        branch_op(get_attribute(get_operand(0), get_operand(1)))
+                        break;
+                    case SET_ATTR:
+                        set_attribute(get_operand(0), get_operand(1));
+                        break;
+                    case CLEAR_ATTR:
+                        clear_attribute(get_operand(0), get_operand(1));
+                        break;
                     case STORE:
                         variable_set(operands[0].bytes, get_operand(1));
                         break;

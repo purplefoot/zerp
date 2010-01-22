@@ -19,3 +19,6 @@ int object_sibling(int object);
 int object_child(int object);
 int remove_object(int object);
 void print_object_name(int number);
+int get_attribute(int object, int attribute);
+int set_attribute(int object, int attribute);
+int clear_attribute(int object, int attribute);
