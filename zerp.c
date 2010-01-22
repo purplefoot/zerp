@@ -126,24 +126,24 @@ int zerp_run() {
                     case STORE:
                         variable_set(operands[0].bytes, get_operand(1));
                         break;
-        //             case INSERT_OBJ:
-        //                 LOG(ZDEBUG, "#INSERT_OBJ %#s, %#s\n", opdesc[0], opdesc[1]);
-        //                 break;
+                    case INSERT_OBJ:
+                        insert_object(get_operand(0), get_operand(1));
+                        break;
                     case LOADW:
                         store_op(get_word(get_operand(0) + get_operand(1) * 2))
                         break;
                     case LOADB:
                         store_op(get_byte(get_operand(0) + get_operand(1)))
                         break;
-        //             case GET_PROP:
-        //                 store_op("#GET_PROP %#s, %#s", 0xbeef)
-        //                 break;
-        //             case GET_PROP_ADDR:
-        //                 store_op("#GET_PROP_ADDR %#s, %#s", 0xbeef)
-        //                 break;
-        //             case GET_NEXT_PROP:
-        //                 store_op("#GET_NEXT_PROP %#s, %#s", 0xbeef)
-        //                 break;
+                    case GET_PROP:
+                        store_op(get_property(get_operand(0), get_operand(1)))
+                        break;
+                    case GET_PROP_ADDR:
+                        store_op(get_property_address(get_operand(0), get_operand(1)))
+                        break;
+                    case GET_NEXT_PROP:
+                        store_op(get_next_property(get_operand(0), get_operand(1)))
+                        break;
                     case ADD:
                         store_op((signed short)get_operand(0) + (signed short)get_operand(1))
                         break;
@@ -179,9 +179,9 @@ int zerp_run() {
                     case GET_PARENT:
                         store_op(object_parent(get_operand(0)))
                         break;
-        //             case GET_PROP_LEN:
-        //                 store_op("#GET_PROP_LEN %#s", 0xbeef)
-        //                 break;
+                    case GET_PROP_LEN:
+                        store_op(get_property_length(get_operand(0)))
+                        break;
                     case INC:
                         variable_set(operands[0].bytes, ((signed short)variable_get(operands[0].bytes)) + 1);
                         break;
@@ -275,9 +275,9 @@ int zerp_run() {
                         store_byte(scratch1 + scratch2, scratch3)
                         LOG(ZDEBUG, "STOREB %04x -> %04x\n", scratch1 + scratch2, scratch3)
                         break;
-        //             case PUT_PROP:
-        //                 LOG(ZDEBUG, "#PUT_PROP %#s %#s -> %#s \n", opdesc[0], opdesc[1], opdesc[2]);
-        //                 break;
+                    case PUT_PROP:
+                        put_property(get_operand(0), get_operand(1), get_operand(2));
+                        break;
                     case SREAD:
                         glk_put_string("INPUT NOW REQUIRED");
                         break;

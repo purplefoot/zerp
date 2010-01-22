@@ -20,6 +20,79 @@ zword_t object_property_table(int number) {
     return (zword_t) o->properties[0] << 8 | o->properties[1];
 }
 
+zword_t object_properties(int number) {
+    zword_t prop_table;
+
+    prop_table = object_property_table(number);
+    return prop_table + (get_byte(prop_table) * 2) + 1;
+}
+
+zword_t get_property_address(int object, int property) {
+    zbyte_t prop_len;
+    zword_t prop_ptr;
+
+    prop_ptr = object_properties(object);
+
+    while (prop_len = get_byte(prop_ptr++)) {
+        if ((prop_len & 0x0f) == property)
+            break;
+        prop_ptr += (prop_len >> V3_PROP_SIZE) + 1;
+    }
+
+    return prop_len ? prop_ptr : prop_len;
+}
+
+zword_t get_property_length(zword_t property_address) {
+    return (zword_t)(get_byte(property_address -1) >> V3_PROP_SIZE) + 1;
+}
+
+zword_t get_property(int object, int property){
+    zbyte_t prop_len;
+    zword_t prop_ptr;
+
+    if (prop_ptr = get_property_address(object, property)) {
+        if ((get_byte(prop_ptr - 1) >> V3_PROP_SIZE) + 1 == 1)
+            return get_byte(prop_ptr);
+        return get_word(prop_ptr);
+    }
+
+    return get_word(zProperties + (property - 1) * 2);
+}
+
+zword_t put_property(int object, int property, zword_t value) {
+    zbyte_t prop_len;
+    zword_t prop_ptr;
+
+    if (prop_ptr = get_property_address(object, property)) {
+        if (get_property_length(prop_ptr) == 1) {
+            store_byte(prop_ptr, value);
+            return value;
+        }
+        store_word(prop_ptr, value);
+        return value;
+    }
+
+    fatal_error("Attempted to write a non-existant property");
+}
+
+int get_next_property(int object, int property) {
+    zbyte_t prop_len;
+    zword_t prop_ptr;
+    int found = FALSE;
+
+    prop_ptr = object_properties(object);
+
+    while ((prop_len = get_byte(prop_ptr++)) && !found) {
+        if (!property)
+            return prop_len & 0xf;
+         if ((prop_len & 0x0f) == property)
+            found = TRUE;
+        prop_ptr += (prop_len >> V3_PROP_SIZE) + 1;
+    }
+
+    return prop_len & 0xf;
+}
+
 int object_in(int object, int parent) {
     return get_object(object)->parent == parent;
 }
