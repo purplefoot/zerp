@@ -28,6 +28,22 @@ zword_t stack_pop() {
     return value;
 }
 
+/*
+    In the seven opcodes that take indirect variable references (inc, dec,
+    inc_chk, dec_chk, load, store, pull), an indirect reference to the stack
+    pointer does not push or pull the top item of the stack - it is read
+    or written in place.
+
+    We will call this peeking and poking the stack (because 80s retro is in, dude.)
+*/
+zword_t stack_peek() {
+    return *(zSP);
+}
+
+zword_t stack_poke(zword_t value) {
+    *(zSP) = value;
+}
+
 zstack_frame_t * call_zroutine(packed_addr_t address, zoperand_t *operands, zbyte_t ret_store){
     zbyte_t local_count;
     zstack_frame_t *newFrame;

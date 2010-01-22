@@ -83,10 +83,24 @@ int zerp_run() {
                         branch_op((signed short)get_operand(0) > (signed short)get_operand(1))
                         break;
                     case DEC_CHK:
-                        branch_op(variable_set(operands[0].bytes, variable_get(operands[0].bytes) - 1) < operands[1].bytes)
+                        if (operands[0].bytes == 0) {
+                            scratch1 = stack_poke(((signed short) stack_peek()) - 1);
+                            scratch2 = (signed short) get_operand(1);
+                        } else {
+                            scratch1 = variable_set(operands[0].bytes, ((signed short) variable_get(operands[0].bytes)) - 1);
+                            scratch2 =  (signed short)get_operand(1);
+                        }
+                        branch_op((signed short)scratch1 < (signed short)scratch2);
                         break;
                     case INC_CHK:
-                        branch_op(variable_set(operands[0].bytes, variable_get(operands[0].bytes) + 1) > operands[1].bytes)
+                        if (operands[0].bytes == 0) {
+                            scratch1 = stack_poke(((signed short) stack_peek()) - 1);
+                            scratch2 = (signed short) get_operand(1);
+                        } else {
+                            scratch1 = variable_set(operands[0].bytes, ((signed short) variable_get(operands[0].bytes)) + 1);
+                            scratch2 =  (signed short)get_operand(1);
+                        }
+                        branch_op((signed short)scratch1 > (signed short)scratch2);
                         break;
                     case JIN:
                         branch_op(object_in(get_operand(0), get_operand(1)))
@@ -285,7 +299,7 @@ int zerp_run() {
                         stack_push(get_operand(0));
                         break;
                     case PULL:
-                        variable_set(get_operand(0), stack_pop);
+                        variable_set(get_operand(0), stack_pop());
                         break;
         //             case SPLIT_WINDOW:
         //                 LOG(ZDEBUG, "#SPLIT_WINDOW %#s\n", opdesc[0]);
