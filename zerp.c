@@ -54,6 +54,8 @@ int zerp_run() {
     zProperties = get_word(OBJECT_TABLE);
     zObjects = zProperties + 62;
     
+    set_header_flags();
+
     running = TRUE;
     LOG(ZDEBUG,"Running...\n", 0);
     
@@ -67,7 +69,7 @@ int zerp_run() {
         
         zPC += decode_instruction(zPC, &instruction, operands, &store_operand, &branch_operand);
 
-        //print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
+        // print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
         // if (zPC >= 0x686 && zPC <= 0x691)
         //     debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
 
@@ -362,4 +364,9 @@ static int test_je(zword_t value, zoperand_t *operands) {
     }
         
     return result;
+}
+
+static void set_header_flags() {
+    store_byte(TERP_NUMBER, 3);
+    store_byte(TERP_VERSION, '0');
 }

@@ -122,6 +122,7 @@ extern packed_addr_t zPC;
 int zerp_run();
 void fatal_error(char *message);
 int glk_printf(char *format, ...);
+static void set_header_flags();
 
 /* The story and status windows. */
 extern winid_t mainwin;
