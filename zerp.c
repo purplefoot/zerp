@@ -67,8 +67,9 @@ int zerp_run() {
         
         zPC += decode_instruction(zPC, &instruction, operands, &store_operand, &branch_operand);
 
-        // print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
-        // debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
+        //print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
+        // if (zPC >= 0x686 && zPC <= 0x691)
+        //     debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
 
         switch (instruction.count) {
             case COUNT_2OP:
@@ -83,24 +84,26 @@ int zerp_run() {
                         branch_op((signed short)get_operand(0) > (signed short)get_operand(1))
                         break;
                     case DEC_CHK:
-                        if (operands[0].bytes == 0) {
-                            scratch1 = stack_poke(((signed short) stack_peek()) - 1);
-                            scratch2 = (signed short) get_operand(1);
+                        scratch1 = get_operand(0);
+                        if (scratch1 == 0) {
+                            scratch3 = (signed short)stack_peek() - 1;
+                            stack_poke(scratch3);
                         } else {
-                            scratch1 = variable_set(operands[0].bytes, ((signed short) variable_get(operands[0].bytes)) - 1);
-                            scratch2 =  (signed short)get_operand(1);
+                            scratch2 = variable_get(scratch1);
+                            scratch3 = variable_set(scratch1, (signed short)scratch2 - 1);
                         }
-                        branch_op((signed short)scratch1 < (signed short)scratch2);
+                        branch_op((signed short)scratch3 < (signed short)get_operand(1));
                         break;
                     case INC_CHK:
-                        if (operands[0].bytes == 0) {
-                            scratch1 = stack_poke(((signed short) stack_peek()) - 1);
-                            scratch2 = (signed short) get_operand(1);
+                        scratch1 = get_operand(0);
+                        if (scratch1 == 0) {
+                            scratch3 = (signed short)stack_peek() + 1;
+                            stack_poke(scratch3);
                         } else {
-                            scratch1 = variable_set(operands[0].bytes, ((signed short) variable_get(operands[0].bytes)) + 1);
-                            scratch2 =  (signed short)get_operand(1);
+                            scratch2 = variable_get(scratch1);
+                            scratch3 = variable_set(scratch1, (signed short)scratch2 + 1);
                         }
-                        branch_op((signed short)scratch1 > (signed short)scratch2);
+                        branch_op((signed short)scratch3 > (signed short)get_operand(1));
                         break;
                     case JIN:
                         branch_op(object_in(get_operand(0), get_operand(1)))
@@ -124,7 +127,9 @@ int zerp_run() {
                         clear_attribute(get_operand(0), get_operand(1));
                         break;
                     case STORE:
-                        variable_set(operands[0].bytes, get_operand(1));
+                        scratch1 = get_operand(0);
+                        scratch2 = get_operand(1);
+                        indirect_variable_set(scratch1, scratch2);
                         break;
                     case INSERT_OBJ:
                         insert_object(get_operand(0), get_operand(1));
@@ -159,6 +164,9 @@ int zerp_run() {
                     case MOD:
                         store_op((signed short)get_operand(0) % (signed short)get_operand(1))
                         break;
+                    default:
+                        LOG(ZERROR, "Unknown opcode: %#04x", instruction.bytes);
+                        fatal_error("bad op code.");
                 }
                 break;
             case COUNT_1OP:
@@ -183,10 +191,22 @@ int zerp_run() {
                         store_op(get_property_length(get_operand(0)))
                         break;
                     case INC:
-                        variable_set(operands[0].bytes, ((signed short)variable_get(operands[0].bytes)) + 1);
+                        scratch1 = get_operand(0);
+                        if (scratch1 == 0) {
+                            stack_poke((signed short)stack_peek() + 1);
+                        } else {
+                            scratch2 = variable_get(scratch1);
+                            variable_set(scratch1, (signed short)scratch2 + 1);
+                        }
                         break;
                     case DEC:
-                        variable_set(operands[0].bytes, ((signed short)variable_get(operands[0].bytes)) - 1);
+                        scratch1 = get_operand(0);
+                        if (scratch1 == 0) {
+                            stack_poke((signed short)stack_peek() - 1);
+                        } else {
+                            scratch2 = variable_get(scratch1);
+                            variable_set(scratch1, (signed short)scratch2 - 1);
+                        }
                         break;
                     case PRINT_ADDR:
                         print_zstring(get_operand(0));
@@ -207,11 +227,18 @@ int zerp_run() {
                         print_zstring(unpack(get_operand(0)));
                         break;
                     case LOAD:
-                        store_op(variable_get(operands[0].bytes))
+                        if (operands[0].type == VARIABLE) {
+                            store_op(indirect_variable_get(get_operand(0)))
+                        } else {
+                            store_op(indirect_variable_get(operands[0].bytes))
+                        }
                         break;
                     case NOT:
                         store_op(~get_operand(0))
                         break;
+                    default:
+                        LOG(ZERROR, "Unknown opcode: %#04x", instruction.bytes);
+                        fatal_error("bad op code.");
                 }
                 break;
             case COUNT_0OP:
@@ -232,15 +259,14 @@ int zerp_run() {
                         break;
                     case NOP:
                         break;
-        //             case SAVE:
-        //                 branch_op("#SAVE", 1)
-        //                 break;
-        //             case RESTORE:
-        //                 branch_op("#RESTORE", 1)
-        //                 break;
-        //             case RESTART:
-        //                 LOG(ZDEBUG, "#RESTART\n", 0);
-        //                 break;
+                    case SAVE:
+                        branch_op(1)
+                        break;
+                    case RESTORE:
+                        branch_op(1)
+                        break;
+                    case RESTART:
+                        break;
                     case RET_POPPED:
                         return_zroutine(stack_pop());
                         break;
@@ -253,11 +279,14 @@ int zerp_run() {
                     case NEW_LINE:
                         glk_put_string("\n");
                         break;
-                    // case SHOW_STATUS:
-                    //     break;
-        //             case VERIFY:
-        //                 branch_op("#VERIFY", 1)
-        //                 break;
+                    case SHOW_STATUS:
+                        break;
+                    case VERIFY:
+                        branch_op(1)
+                        break;
+                    default:
+                        LOG(ZERROR, "Unknown opcode: %#04x", instruction.bytes);
+                        fatal_error("bad op code.");
                 }
                 break;
             case COUNT_VAR:
@@ -279,7 +308,7 @@ int zerp_run() {
                         put_property(get_operand(0), get_operand(1), get_operand(2));
                         break;
                     case SREAD:
-                        glk_put_string("INPUT NOW REQUIRED");
+                        fatal_error("INPUT NOW REQUIRED");
                         break;
                     case PRINT_CHAR:
                         glk_put_char(get_operand(0));
@@ -299,28 +328,23 @@ int zerp_run() {
                         stack_push(get_operand(0));
                         break;
                     case PULL:
-                        variable_set(get_operand(0), stack_pop());
+                        scratch1 = get_operand(0);
+                        indirect_variable_set(scratch1, stack_pop());
                         break;
-        //             case SPLIT_WINDOW:
-        //                 LOG(ZDEBUG, "#SPLIT_WINDOW %#s\n", opdesc[0]);
-        //                 break;
-        //             case SET_WINDOW:
-        //                 LOG(ZDEBUG, "#SET_WINDOW %#s\n", opdesc[0]);
-        //                 break;
-        //             case OUTPUT_STREAM:
-        //                 LOG(ZDEBUG, "#OUTPUT_STREAM %#s\n", opdesc[0]);
-        //                 break;
-        //             case INPUT_STREAM:
-        //                 LOG(ZDEBUG, "#INPUT_STREAM %#s\n", opdesc[0]);
-        //                 break;
-        //             case SOUND_EFFECT:
-        //                 LOG(ZDEBUG, "#SOUND_EFFECT %#s\n", opdesc[0]);
-        //                 break;
+                    case SPLIT_WINDOW:
+                    case SET_WINDOW:
+                    case OUTPUT_STREAM:
+                    case INPUT_STREAM:
+                    case SOUND_EFFECT:
+                        break;
+                    default:
+                        LOG(ZERROR, "Unknown opcode: %#04x", instruction.bytes);
+                        fatal_error("bad op code.");
                 }
                 break;
             default:
-                LOG(ZERROR, "Unknown opcode: %#x", instruction.opcode);
-                fatal_error("Unknown Z-machine opcode.");
+                LOG(ZERROR, "Unknown opcode: %#04x", instruction.bytes);
+                fatal_error("bad opcode");
         }
     }
     

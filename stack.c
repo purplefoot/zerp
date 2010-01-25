@@ -37,11 +37,12 @@ zword_t stack_pop() {
     We will call this peeking and poking the stack (because 80s retro is in, dude.)
 */
 zword_t stack_peek() {
+    LOG(ZDEBUG, "\nPeek %04x", *(zSP));
     return *(zSP);
 }
 
 zword_t stack_poke(zword_t value) {
-    *(zSP) = value;
+    return *(zSP) = value;
 }
 
 zstack_frame_t * call_zroutine(packed_addr_t address, zoperand_t *operands, zbyte_t ret_store){
