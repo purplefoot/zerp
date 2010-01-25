@@ -23,7 +23,7 @@ int print_zstring(packed_addr_t address) {
                 zscii++;
                 if (zscii++ > 2) {
                     glk_put_char((unsigned char)zsciichar);                    
-                    zsciichar = 0; zscii = 0;                            
+                    zsciichar = 0; zscii = 0; alpha = 0;
                 }
             } else if (abbriv) {
                 abbrv_index = (32 * (abbriv - 1) + zchar);
