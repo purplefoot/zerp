@@ -74,6 +74,7 @@ zstack_frame_t * call_zroutine(packed_addr_t address, zoperand_t *operands, zbyt
     }
     
     zPC = address;
+    zSP++;
     
     return zFP++;
 }
