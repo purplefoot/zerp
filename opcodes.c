@@ -62,7 +62,7 @@ int decode_instruction(packed_addr_t pc, zinstruction_t *instruction, zoperand_t
             In long form the operand count is always 2OP. The opcode number is given in the
             bottom 5 bits.
         */
-        instruction->form = OP_LONG;
+        instruction->form = instruction->bytes >> 6;
         instruction->count = COUNT_2OP;
         instruction->opcode = instruction->bytes & OPCODE_5BIT;
         decode_long(&pc, instruction, operands);
@@ -175,7 +175,6 @@ int decode_store_and_branch(packed_addr_t *pc, zinstruction_t *instruction, zwor
                 case OR:
                 case AND:
                 case LOADW:
-                case INSERT_OBJ:
                 case LOADB:
                 case GET_PROP:
                 case GET_PROP_ADDR:
@@ -186,6 +185,17 @@ int decode_store_and_branch(packed_addr_t *pc, zinstruction_t *instruction, zwor
                 case DIV:
                 case MOD:
                     decode_store_op(pc, instruction, store);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case COUNT_0OP:
+            switch(instruction->opcode) {
+                case SAVE:
+                case RESTORE:
+                case VERIFY:
+                    decode_branch_op(pc, instruction, branch);
                     break;
                 default:
                     break;
@@ -233,10 +243,10 @@ static void decode_branch_op(packed_addr_t *pc, zinstruction_t *instruction, zbr
     if (!(branch_short >> 6 & 1)) {
         branch->type = BRANCH_LONG;
         branch_long = get_byte((*pc)++);
-        branch->offset = branch_short & 0x1f;
+        branch->offset = branch_short & 0x3f;
+        if (branch_short & 0x20)
+            branch->offset -= 0x40;
         branch->offset = branch->offset << 8 | branch_long;
-        branch->offset &= 0x1fff;
-        branch->offset |= (branch_short >> 6 & 1) << 15;
         branch->bytes = branch_short << 8 | branch_long;
     } else {
         branch->type = BRANCH_SHORT;
