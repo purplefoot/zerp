@@ -8,8 +8,9 @@
 #include "objects.h"
 
 zobject_t *get_object(int number) {
-    if (number == 0 || number > 255)
+    if (number == 0 || number > 255) {
         fatal_error("Illegal object number");
+    }
     return (zobject_t *) (zMachine + zObjects + sizeof(zobject_t) * (number - 1));
 }
 
@@ -110,7 +111,21 @@ int object_child(int object) {
 }
 
 int remove_object(int object) {
-    return get_object(object)->parent = 0;
+    zobject_t *obj, *obj_parent, *prev_sibling;
+
+    obj = get_object(object);
+    obj_parent = get_object(obj->parent);
+
+    if (obj_parent->child == object) {
+        obj_parent->child = obj->sibling;
+    } else {
+        for (prev_sibling = get_object(obj_parent->child); prev_sibling->sibling != object; prev_sibling++) ;
+        prev_sibling->sibling = obj->sibling;
+    }
+
+    obj->parent = 0;
+
+    return 0;
 }
 
 int insert_object(int object, int destination) {
@@ -119,10 +134,12 @@ int insert_object(int object, int destination) {
 
     obj = get_object(object);
     dest = get_object(destination);
-    obj_parent = get_object(obj->parent);
 
-    if (obj_parent->child == object)
-        obj_parent->child = obj->sibling;
+    if (obj->parent) {
+        obj_parent = get_object(obj->parent);
+        if (obj_parent->child == object)
+            obj_parent->child = obj->sibling;
+    }
 
     obj->sibling = dest->child;
     dest->child = object;
