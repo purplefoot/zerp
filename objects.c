@@ -135,11 +135,8 @@ int insert_object(int object, int destination) {
     obj = get_object(object);
     dest = get_object(destination);
 
-    if (obj->parent) {
-        obj_parent = get_object(obj->parent);
-        if (obj_parent->child == object)
-            obj_parent->child = obj->sibling;
-    }
+    if (obj->parent)
+        remove_object(object);
 
     obj->sibling = dest->child;
     dest->child = object;
