@@ -63,11 +63,15 @@ zstack_frame_t * call_zroutine(packed_addr_t address, zoperand_t *operands, zbyt
     newFrame->sp = zSP;
     newFrame->ret_store = ret_store;
     
-    for (local_count = get_byte(address++); local_count > 0; local_count--) {
-        newFrame->locals[local_count - 1] = get_word(address);
-        address += 2;        
+	local_count = get_byte(address++);
+    for (i = 0; i < local_count; i++) {
+        newFrame->locals[i] = get_word(address);
+        address += 2;   
     }
+	while (i++ < 16)
+		newFrame->locals[i] = 0;
     
+	i = 0;
     while (operands->type != NONE) {
         newFrame->locals[i++] = operands->type == VARIABLE ? variable_get(operands->bytes) : operands->bytes;
         operands++;
