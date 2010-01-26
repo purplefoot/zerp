@@ -213,16 +213,31 @@ static void debug_print_zstring(packed_addr_t address) {
 }
 
 static void debug_print_object(int number) {
+	int i;
+	zword_t addr, len;
+	
     glk_printf("Object %d:\nName: \"", number);
     print_object_name(number);
-    glk_put_string("\"\nAttributes:");
+    glk_put_string("\"\nAttributes: ");
+	for (i = 0; i < 32; i++) {
+		if (get_attribute(number, i))
+			glk_printf("%d ", i);
+	} 
     glk_printf("\nParent: %3d \"", object_parent(number));
     print_object_name(object_parent(number));
     glk_printf("\"\nSibling: %3d \"", object_sibling(number));
     print_object_name(object_sibling(number));
     glk_printf("\"\nChild: %3d \"", object_child(number));
     print_object_name(object_child(number));
-    glk_put_string("\"\n");
+    glk_put_string("\"\nProperties:\n");
+	i = 0;
+	while (i = get_next_property(number, i)) {
+		glk_printf("    [%2d] ", i);
+		addr = get_property_address(number, i);
+		for (len = get_property_length(addr); len > 0; len--)
+			glk_printf("%02x ", get_byte(addr++));
+		glk_put_string("\n");
+	}
 }
 
 static void dump_stack() {
