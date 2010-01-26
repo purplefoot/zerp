@@ -12,6 +12,7 @@ typedef struct zobject {
 } zobject_t;
 
 #define V3_PROP_SIZE 5
+#define V3_PROP_NUM 0x1f
 
 zobject_t *get_object(int number);
 zword_t object_property_table(int number);

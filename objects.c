@@ -35,7 +35,7 @@ zword_t get_property_address(int object, int property) {
     prop_ptr = object_properties(object);
 
     while (prop_len = get_byte(prop_ptr++)) {
-        if ((prop_len & 0x0f) == property)
+        if ((prop_len & V3_PROP_NUM) == property)
             break;
         prop_ptr += (prop_len >> V3_PROP_SIZE) + 1;
     }
@@ -85,13 +85,13 @@ int get_next_property(int object, int property) {
 
     while ((prop_len = get_byte(prop_ptr++)) && !found) {
         if (!property)
-            return prop_len & 0xf;
-         if ((prop_len & 0x0f) == property)
+            return prop_len & V3_PROP_NUM;
+         if ((prop_len & V3_PROP_NUM) == property)
             found = TRUE;
         prop_ptr += (prop_len >> V3_PROP_SIZE) + 1;
     }
 
-    return prop_len & 0xf;
+    return prop_len & V3_PROP_NUM;
 }
 
 int object_in(int object, int parent) {
@@ -160,7 +160,7 @@ int get_attribute(int object, int attribute) {
     int bit;
 
     bit = -((attribute % 8) - 7);
-    return (get_object(object)->attributes[attribute / 4] >> bit) & 1;
+    return (get_object(object)->attributes[attribute / 8] >> bit) & 1;
 }
 
 int set_attribute(int object, int attribute) {
@@ -169,7 +169,7 @@ int set_attribute(int object, int attribute) {
 
     bit = 1 << -((attribute % 8) - 7);
     obj = get_object(object);
-    obj->attributes[attribute /4] = obj->attributes[attribute /4] | bit;
+    obj->attributes[attribute /8] = obj->attributes[attribute /4] | bit;
     return 1;
 }
 
@@ -179,6 +179,6 @@ int clear_attribute(int object, int attribute) {
 
     bit = 1 << -((attribute % 8) - 7);
     obj = get_object(object);
-    obj->attributes[attribute /4] = obj->attributes[attribute /4] & ~bit;
+    obj->attributes[attribute /8] = obj->attributes[attribute /4] & ~bit;
     return 0;
 }
