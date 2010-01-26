@@ -11,6 +11,7 @@
 #include "opcodes.h"
 #include "stack.h"
 #include "objects.h"
+#include "parse.h"
 #include "debug.h"
 
 zword_t * zStack = 0;
@@ -70,8 +71,8 @@ int zerp_run() {
         zPC += decode_instruction(zPC, &instruction, operands, &store_operand, &branch_operand);
 
         // print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
-        // if (zPC >= 0x686 && zPC <= 0x691)
-        //     debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
+        // if (zPC >= 0xb36f && zPC <= 0xb470)
+        // debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
 
         switch (instruction.count) {
             case COUNT_2OP:
@@ -310,7 +311,7 @@ int zerp_run() {
                         put_property(get_operand(0), get_operand(1), get_operand(2));
                         break;
                     case SREAD:
-                        fatal_error("INPUT NOW REQUIRED");
+                        read(get_operand(0), get_operand(1));
                         break;
                     case PRINT_CHAR:
                         glk_put_char(get_operand(0));
