@@ -170,7 +170,7 @@ int set_attribute(int object, int attribute) {
 
     bit = 1 << -((attribute % 8) - 7);
     obj = get_object(object);
-    obj->attributes[attribute /8] = obj->attributes[attribute /4] | bit;
+    obj->attributes[attribute /8] = obj->attributes[attribute / 8] | bit;
     return 1;
 }
 
@@ -180,6 +180,6 @@ int clear_attribute(int object, int attribute) {
 
     bit = 1 << -((attribute % 8) - 7);
     obj = get_object(object);
-    obj->attributes[attribute /8] = obj->attributes[attribute /4] & ~bit;
+    obj->attributes[attribute /8] = obj->attributes[attribute / 8] & ~bit;
     return 0;
 }
