@@ -334,11 +334,16 @@ int zerp_run() {
                         glk_printf("%d", (signed short)get_operand(0));
                         break;
                     case RANDOM:
-                        if ((signed short)operands[0].bytes < 0) {
-                            srandom(operands[0].bytes);
+						scratch1 = (signed short) get_operand(0);
+                        if (scratch1 < (zword_t) 0) {
+                            srandom((unsigned short)scratch1);
                             variable_set(store_operand, 0);
-                        } else {
-                            variable_set(store_operand, random());
+                        } else if (scratch1 == 0) {
+                            srandom(time(0));
+                            variable_set(store_operand, 0);
+						} else {
+							scratch2 = (random() % scratch1) + 1;
+                            variable_set(store_operand, scratch2);
                         }
                         break;
                     case PUSH:
