@@ -24,7 +24,7 @@
 #define ZDEBUG          3
 #define ZCRAZY          4
 
-#define DEBUG           3
+#define DEBUG           1
 
 #ifdef DEBUG
 #define LOG(level, fmt, ...) \
