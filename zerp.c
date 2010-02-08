@@ -23,6 +23,8 @@ zstack_frame_t * zCallStackTop = 0;
 zword_t zGlobals = 0;
 zword_t zProperties = 0;
 zword_t zObjects = 0;
+zword_t zDictionaryHeader = 0;
+zword_t zDictionary = 0;
 packed_addr_t zPC = 0;
 
 static int test_je(zword_t value, zoperand_t *operands);
@@ -54,7 +56,9 @@ int zerp_run() {
     zGlobals = get_word(GLOBALS);
     zProperties = get_word(OBJECT_TABLE);
     zObjects = zProperties + 62;
-    
+	zDictionaryHeader = get_word(DICTIONARY);
+	zDictionary = zDictionaryHeader + 4 + get_byte(zDictionaryHeader);
+
     set_header_flags();
 
     running = TRUE;
@@ -71,7 +75,7 @@ int zerp_run() {
         zPC += decode_instruction(zPC, &instruction, operands, &store_operand, &branch_operand);
 
         // print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
-        // if (zPC >= 0xb36f && zPC <= 0xb470)
+        // if (zPC >= 0x5d00 && zPC <= 0x6400)
         // debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
 
         switch (instruction.count) {

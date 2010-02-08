@@ -83,6 +83,8 @@ extern zstack_frame_t * zCallStackTop;
 extern zword_t zGlobals;
 extern zword_t zProperties;
 extern zword_t zObjects;
+extern zword_t zDictionaryHeader;
+extern zword_t zDictionary;
 
 extern packed_addr_t zPC;
 
