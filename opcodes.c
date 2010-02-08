@@ -32,7 +32,7 @@ int decode_instruction(packed_addr_t pc, zinstruction_t *instruction, zoperand_t
         */
         instruction->opcode = instruction->bytes;
         instruction->form = OP_VARIABLE;
-        LOG(ZERROR, "Unsupported extended opcode %#02x @ %#04x\n", get_byte(pc++));
+        LOG(ZERROR, "Unsupported extended opcode %#02x @ %#04x\n", get_byte(pc++), startpc);
         decode_variable(&pc, instruction, get_byte(pc++), operands);
     } else if (instruction->bytes >> 6 == OP_VARIABLE ) {
         /*
