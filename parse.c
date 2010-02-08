@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include "glk.h"
 #include "zerp.h"
+#include "zscii.h"
 #include "parse.h"
 
 zword_t read(zword_t input_buffer, zword_t parse_buffer) {
@@ -85,7 +86,10 @@ int tokenise(zword_t text, zword_t parse_buffer) {
 				if (get_byte(current) == '\0')
 					break;
 				if (sep_found) {
-					store_word(parse_buffer, 0);
+					token[0] = get_byte(current++);
+					encode_zstring(token, 1, zstring, DICT_RESOLUTION_V3);
+					dict_address = lookup_entry(zstring);
+					store_word(parse_buffer, dict_address);
 					parse_buffer += 2;
 					store_byte(parse_buffer++, 1);
 					store_byte(parse_buffer++, current - text);
@@ -103,12 +107,14 @@ int tokenise(zword_t text, zword_t parse_buffer) {
 			continue;
 		}
 		if (sep_found) {
-			store_word(parse_buffer, 0);
+			token[0] = get_byte(current++);
+			encode_zstring(token, 1, zstring, DICT_RESOLUTION_V3);
+			dict_address = lookup_entry(zstring);
+			store_word(parse_buffer, dict_address);
 			parse_buffer += 2;
 			store_byte(parse_buffer++, 1);
 			store_byte(parse_buffer++, current - text);
 			tokens_total++;
-			current++;
 			continue;
 		}
 		token_found = TRUE;
@@ -138,24 +144,36 @@ int check_separator(zword_t separators, zbyte_t total, zbyte_t value) {
 }
 
 void encode_zstring(char *token_buffer, int buf_len, zword_t *zstring, int zstring_len) {
-	int zword;
-	zbyte_t zchar;
+	int zword, i;
+	zbyte_t zchar, shifted;
 	zword_t encoded_word;
 	char *token_end;
 
 	token_end = token_buffer + buf_len;
+	shifted = 0;
 	while (zstring_len-- > 0) {
 		zword = 0;
 		encoded_word = 0;
 		while (zword++ < 3) {
-			if (token_buffer < token_end) {
-				if (*token_buffer >= 'a' && *token_buffer <= 'z') {
+			if (shifted || (token_buffer < token_end)) {
+				if (shifted) {
+					zchar = shifted;
+					shifted = 0;
+				} else if (*token_buffer >= 'a' && *token_buffer <= 'z') {
 					/* turn a-z in a0 alphabet. FIXME: this won't fly for custom alphabets in v5 obviously */
 					zchar = *(token_buffer++) - 91; /* lowercase ascii to a0 */
 				} else {
-					/* FIXME: lookup in a2 */
-				
 					/* FIXME: start zscii sequence */
+
+					/* FIXME: lookup in a2 */
+					for (i = 7; i < 32; i++) {
+						if (zAlphabet[2][i] == *token_buffer) {
+							shifted = i;
+							zchar = 5;
+							token_buffer++;
+							break;
+						}
+					}
 				}				
 			} else {
 				/* finished word, add padding zchars */
