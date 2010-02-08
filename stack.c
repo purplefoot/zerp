@@ -14,7 +14,7 @@ int stack_push(zword_t value) {
         fatal_error("Value stack overflow!\n");
     }
     *(++zSP) = value;
-    LOG(ZDEBUG, "\nStack: push - size now %i, frame usage %i (pushed #%x)", 2051 - (zSP - zStack), (zSP - zFP->sp) - 1, value); 
+    LOG(ZDEBUG, "\nStack: push - size now %li, frame usage %li (pushed #%x)", 2051 - (zSP - zStack), (zSP - zFP->sp) - 1, value); 
     return value;
 }
 
@@ -25,7 +25,7 @@ zword_t stack_pop() {
         fatal_error("Value stack underflow!\n");
     }
     value =  *(zSP--);
-    LOG(ZDEBUG, "\nStack: pop - size now %i, frame usage %i (value #%x)", 2051 - (zSP - zStack), (zSP - zFP->sp) - 1, value); 
+    LOG(ZDEBUG, "\nStack: pop - size now %li, frame usage %li (value #%x)", 2051 - (zSP - zStack), (zSP - zFP->sp) - 1, value); 
     return value;
 }
 
@@ -38,12 +38,12 @@ zword_t stack_pop() {
     We will call this peeking and poking the stack (because 80s retro is in, dude.)
 */
 zword_t stack_peek() {
-    LOG(ZDEBUG, "\nStack: pop - size now %i, frame usage %i (pushed #%x)", 2051 - (zSP - zStack), (zSP - zFP->sp) - 1, *(zSP)); 
+    LOG(ZDEBUG, "\nStack: pop - size now %li, frame usage %li (pushed #%x)", 2051 - (zSP - zStack), (zSP - zFP->sp) - 1, *(zSP)); 
     return *(zSP);
 }
 
 zword_t stack_poke(zword_t value) {
-    LOG(ZDEBUG, "\nStack: push - size now %i, frame usage %i (value #%x)", 2051 - (zSP - zStack), (zSP - zFP->sp) - 1, value); 
+    LOG(ZDEBUG, "\nStack: push - size now %li, frame usage %li (value #%x)", 2051 - (zSP - zStack), (zSP - zFP->sp) - 1, value); 
     return *(zSP) = value;
 }
 
@@ -95,8 +95,8 @@ zstack_frame_t *return_zroutine(zword_t ret_value) {
     if ((zFP - 1) < zCallStack)
         fatal_error("Call stack underflow");
     
-    LOG(ZDEBUG, "\nReturned %i into V%x", ret_value, zFP->ret_store)
-	LOG(ZDEBUG, "\nStack: returned, discarded %i outstanding items (stack top now #%x, size %i, frame usage %i)",
+    LOG(ZDEBUG, "\nReturned %i into V%x (%05x)", ret_value, zFP->ret_store, zFP->pc)
+	LOG(ZDEBUG, "\nStack: returned, discarded %li outstanding items (stack top now #%hn, size %li, frame usage %li)",
 				zSP - zFP->sp, (zFP - 1)->sp, (zSP - (zFP - 1)->sp) - (zSP - zFP->sp),(zFP - 1) - zCallStack)
 
     zSP = zFP->sp;
