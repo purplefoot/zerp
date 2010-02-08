@@ -111,7 +111,8 @@ int object_child(int object) {
 }
 
 int remove_object(int object) {
-    zobject_t *obj, *obj_parent, *prev_sibling;
+	zobject_t *obj, *obj_parent;
+	zbyte_t prev_sibling;
 
     obj = get_object(object);
     obj_parent = get_object(obj->parent);
@@ -119,8 +120,8 @@ int remove_object(int object) {
     if (obj_parent->child == object) {
         obj_parent->child = obj->sibling;
     } else {
-        for (prev_sibling = get_object(obj_parent->child); prev_sibling->sibling != object; prev_sibling++) ;
-        prev_sibling->sibling = obj->sibling;
+        for (prev_sibling = obj_parent->child; get_object(prev_sibling)->sibling != object; prev_sibling = get_object(prev_sibling)->sibling) ;
+        get_object(prev_sibling)->sibling = obj->sibling;
     }
 
     obj->parent = 0;
