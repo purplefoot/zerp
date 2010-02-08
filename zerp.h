@@ -24,14 +24,14 @@
 #define ZDEBUG          3
 #define ZCRAZY          4
 
-#define DEBUG           3
+#define DEBUG           1
 
 #ifdef DEBUG
 #define LOG(level, fmt, ...) \
     if (DEBUG >= level) { \
 		char dbuff[256]; \
 		sprintf(dbuff, fmt, __VA_ARGS__); \
-		fprintf(stderr, "%5x %s\n", zPC, dbuff + 1); \
+		fprintf(stderr, "%5x %s\n", instructionPC, dbuff + 1); \
 	}
 #else
 #define LOG(level, fmt, ...)
@@ -87,6 +87,7 @@ extern zword_t zDictionaryHeader;
 extern zword_t zDictionary;
 
 extern packed_addr_t zPC;
+extern packed_addr_t instructionPC;
 
 /* header offsets */
 #define Z_VERSION           0x00

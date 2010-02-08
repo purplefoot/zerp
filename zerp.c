@@ -26,6 +26,7 @@ zword_t zObjects = 0;
 zword_t zDictionaryHeader = 0;
 zword_t zDictionary = 0;
 packed_addr_t zPC = 0;
+packed_addr_t instructionPC = 0;
 
 static int test_je(zword_t value, zoperand_t *operands);
 
@@ -35,7 +36,6 @@ int zerp_run() {
     zoperand_t operands[8];
     zbranch_t branch_operand;
     zword_t store_operand, scratch1, scratch2, scratch3, scratch4;
-    packed_addr_t instructionPC;
     int running;
 
 
@@ -75,8 +75,8 @@ int zerp_run() {
         zPC += decode_instruction(zPC, &instruction, operands, &store_operand, &branch_operand);
 
         // print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
-        // if (zPC >= 0x5d00 && zPC <= 0x6400)
-        // debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
+        // if (zPC == 0x5d00)
+        // 	        debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
 
         switch (instruction.count) {
             case COUNT_2OP:
