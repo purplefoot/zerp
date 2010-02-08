@@ -32,7 +32,7 @@ int zerp_run() {
     zinstruction_t instruction;
     zoperand_t operands[8];
     zbranch_t branch_operand;
-    zword_t store_operand, scratch1, scratch2, scratch3;
+    zword_t store_operand, scratch1, scratch2, scratch3, scratch4;
     packed_addr_t instructionPC;
     int running;
 
@@ -88,6 +88,7 @@ int zerp_run() {
                         break;
                     case DEC_CHK:
                         scratch1 = get_operand(0);
+						scratch4 = get_operand(1);
                         if (scratch1 == 0) {
                             scratch3 = (signed short)stack_peek() - 1;
                             stack_poke(scratch3);
@@ -95,10 +96,11 @@ int zerp_run() {
                             scratch2 = variable_get(scratch1);
                             scratch3 = variable_set(scratch1, (signed short)scratch2 - 1);
                         }
-                        branch_op((signed short)scratch3 < (signed short)get_operand(1));
+                        branch_op((signed short)scratch3 < (signed short)scratch4);
                         break;
                     case INC_CHK:
                         scratch1 = get_operand(0);
+						scratch4 = get_operand(1);
                         if (scratch1 == 0) {
                             scratch3 = (signed short)stack_peek() + 1;
                             stack_poke(scratch3);
@@ -106,13 +108,15 @@ int zerp_run() {
                             scratch2 = variable_get(scratch1);
                             scratch3 = variable_set(scratch1, (signed short)scratch2 + 1);
                         }
-                        branch_op((signed short)scratch3 > (signed short)get_operand(1));
+                        branch_op((signed short)scratch3 > (signed short)scratch4);
                         break;
                     case JIN:
                         branch_op(object_in(get_operand(0), get_operand(1)))
                         break;
                     case TEST:
-                        branch_op(get_operand(0) & get_operand(1) == get_operand(1))
+						scratch1 = get_operand(0);
+						scratch2 = get_operand(1);
+                        branch_op((scratch1 & scratch2) == scratch2)
                         break;
                     case OR:
                         store_op(get_operand(0) | get_operand(1))
@@ -138,10 +142,16 @@ int zerp_run() {
                         insert_object(get_operand(0), get_operand(1));
                         break;
                     case LOADW:
-                        store_op(get_word(get_operand(0) + get_operand(1) * 2))
+						scratch1 = get_operand(0);
+						scratch2 = get_operand(1);
+						LOG(ZDEBUG, "\nLoading word at #%x", scratch1 + scratch2 * 2)
+                        store_op(get_word(scratch1 + scratch2 * 2))
                         break;
                     case LOADB:
-                        store_op(get_byte(get_operand(0) + get_operand(1)))
+						scratch1 = get_operand(0);
+						scratch2 = get_operand(1);
+						LOG(ZDEBUG, "\nLoading byte at #%x", scratch1 + scratch2)
+                        store_op(get_byte(scratch1 + scratch2))
                         break;
                     case GET_PROP:
                         store_op(get_property(get_operand(0), get_operand(1)))
@@ -299,13 +309,13 @@ int zerp_run() {
                         break;
                     case STOREW:
                         scratch1 = get_operand(0); scratch2 = get_operand(1); scratch3 = get_operand(2);
+                        LOG(ZDEBUG, "\nStoring word value %i at #%x", scratch3, scratch1 + scratch2 * 2)
                         store_word(scratch1 + scratch2 * 2, scratch3);
-                        LOG(ZDEBUG, "STOREW %04x -> %04x\n", scratch1 + scratch2 * 2, scratch3)
                         break;
                     case STOREB:
                         scratch1 = get_operand(0); scratch2 = get_operand(1); scratch3 = get_operand(2);
+                        LOG(ZDEBUG, "\nStoring byte value %i at #%x", scratch3, scratch1 + scratch2)
                         store_byte(scratch1 + scratch2, scratch3)
-                        LOG(ZDEBUG, "STOREB %04x -> %04x\n", scratch1 + scratch2, scratch3)
                         break;
                     case PUT_PROP:
                         put_property(get_operand(0), get_operand(1), get_operand(2));

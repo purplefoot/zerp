@@ -24,12 +24,15 @@
 #define ZDEBUG          3
 #define ZCRAZY          4
 
-#define DEBUG           1
+#define DEBUG           3
 
 #ifdef DEBUG
 #define LOG(level, fmt, ...) \
-    if (DEBUG >= level) \
-        glk_printf(fmt, __VA_ARGS__);
+    if (DEBUG >= level) { \
+		char dbuff[256]; \
+		sprintf(dbuff, fmt, __VA_ARGS__); \
+		fprintf(stderr, "%5x %s\n", zPC, dbuff + 1); \
+	}
 #else
 #define LOG(level, fmt, ...)
 #endif

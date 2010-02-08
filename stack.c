@@ -3,6 +3,7 @@
     stack.c : z-machine stacks - value and call
 */
 
+#include <stdio.h>
 #include "glk.h"
 #include "zerp.h"
 #include "opcodes.h"
@@ -13,7 +14,7 @@ int stack_push(zword_t value) {
         fatal_error("Value stack overflow!\n");
     }
     *(++zSP) = value;
-    LOG(ZDEBUG, "\nPush %04x", value); 
+    LOG(ZDEBUG, "\nStack: push - size now %i, frame usage %i (pushed #%x)", 2051 - (zSP - zStack), (zSP - zFP->sp) - 1, value); 
     return value;
 }
 
@@ -24,7 +25,7 @@ zword_t stack_pop() {
         fatal_error("Value stack underflow!\n");
     }
     value =  *(zSP--);
-    LOG(ZDEBUG, "\nPop %04x", value); 
+    LOG(ZDEBUG, "\nStack: pop - size now %i, frame usage %i (value #%x)", 2051 - (zSP - zStack), (zSP - zFP->sp) - 1, value); 
     return value;
 }
 
@@ -37,11 +38,12 @@ zword_t stack_pop() {
     We will call this peeking and poking the stack (because 80s retro is in, dude.)
 */
 zword_t stack_peek() {
-    LOG(ZDEBUG, "\nPeek %04x", *(zSP));
+    LOG(ZDEBUG, "\nStack: pop - size now %i, frame usage %i (pushed #%x)", 2051 - (zSP - zStack), (zSP - zFP->sp) - 1, *(zSP)); 
     return *(zSP);
 }
 
 zword_t stack_poke(zword_t value) {
+    LOG(ZDEBUG, "\nStack: push - size now %i, frame usage %i (value #%x)", 2051 - (zSP - zStack), (zSP - zFP->sp) - 1, value); 
     return *(zSP) = value;
 }
 
@@ -49,7 +51,10 @@ zstack_frame_t * call_zroutine(packed_addr_t address, zoperand_t *operands, zbyt
     zbyte_t local_count;
     zstack_frame_t *newFrame;
     int i = 0;
-    
+	packed_addr_t routine;
+
+	routine = address;
+
     if (address == 0) {
         variable_set(ret_store, 0);
         return;
@@ -77,6 +82,7 @@ zstack_frame_t * call_zroutine(packed_addr_t address, zoperand_t *operands, zbyt
         operands++;
     }
     
+	LOG(ZDEBUG, "\nCALL $%x -> V%03i", routine, ret_store)
     zPC = address;
     zSP++;
     
@@ -89,6 +95,10 @@ zstack_frame_t *return_zroutine(zword_t ret_value) {
     if ((zFP - 1) < zCallStack)
         fatal_error("Call stack underflow");
     
+    LOG(ZDEBUG, "\nReturned %i into V%x", ret_value, zFP->ret_store)
+	LOG(ZDEBUG, "\nStack: returned, discarded %i outstanding items (stack top now #%x, size %i, frame usage %i)",
+				zSP - zFP->sp, (zFP - 1)->sp, (zSP - (zFP - 1)->sp) - (zSP - zFP->sp),(zFP - 1) - zCallStack)
+
     zSP = zFP->sp;
     zPC = zFP->pc;
     ret_store = zFP->ret_store;
@@ -96,6 +106,5 @@ zstack_frame_t *return_zroutine(zword_t ret_value) {
     zFP--;
     
     variable_set(ret_store, ret_value);
-    
     return zFP;
 }
