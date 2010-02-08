@@ -24,7 +24,7 @@
 #define ZDEBUG          3
 #define ZCRAZY          4
 
-#define DEBUG           1
+#define DEBUG           3
 
 #ifdef DEBUG
 #define LOG(level, fmt, ...) \
@@ -56,7 +56,7 @@ typedef unsigned int packed_addr_t;
 #define unpack(addr) addr << 1
 
 typedef struct zstack_frame {
-    zword_t pc;
+    packed_addr_t pc;
     zword_t *sp;
     zbyte_t ret_store;
     zword_t locals[16];
