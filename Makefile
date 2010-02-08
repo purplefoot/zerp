@@ -30,6 +30,9 @@ zerp: $(OBJS)
 czerp: $(OBJS)
 	$(CC) $(OPTIONS) $(CGLKINCLUDE) -o czerp $(OBJS) $(CLIBS)
 
+stats:
+	wc -l $(HEADERS) $(SOURCE)
+
 clean:
 	rm -f *~ *.o zerp czerp test/*.z* test/czerp
 
