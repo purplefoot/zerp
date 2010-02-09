@@ -297,6 +297,7 @@ int zerp_run() {
                         glk_put_string("\n");
                         break;
                     case SHOW_STATUS:
+						show_status_line();
                         break;
                     case VERIFY:
                         branch_op(1)
@@ -325,6 +326,7 @@ int zerp_run() {
                         put_property(get_operand(0), get_operand(1), get_operand(2));
                         break;
                     case SREAD:
+						show_status_line();
                         read(get_operand(0), get_operand(1));
                         break;
                     case PRINT_CHAR:

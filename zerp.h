@@ -126,6 +126,7 @@ extern packed_addr_t instructionPC;
 
 /* function declarations */
 int zerp_run();
+void show_status_line();
 void fatal_error(char *message);
 int glk_printf(char *format, ...);
 static void set_header_flags();
