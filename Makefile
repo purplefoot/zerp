@@ -1,7 +1,7 @@
 OPTIONS = -g
 
-GLKDIR = ./glkterm
-CGLKDIR = ./cheapglk
+GLKDIR = ../glkterm
+CGLKDIR = ../cheapglk
 
 CFLAGS = $(OPTIONS) $(GLKINCLUDE)
 
@@ -9,7 +9,7 @@ ifeq ($($@),czerp)
 	CFLAGS = $(OPTIONS) $(CGLKINCLUDE)
 endif
 
-GLKINCLUDE = -I./glkterm
+GLKINCLUDE = -I$(GLKDIR)
 CGLKINCLUDE = -I$(CGLKDIR)
 
 LIBS = -L$(GLKDIR) -lncurses -lglkterm
