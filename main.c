@@ -85,7 +85,7 @@ void glk_main(void)
     
     // show_banner();
     if (get_byte(0) != Z_VERSION_3) {
-        glk_printf("Unsupported version: this file needs version %d.", get_word(0));
+        glk_printf("Unsupported version: this file needs version %d.", get_byte(0));
         return;
     }
     zerp_run();
