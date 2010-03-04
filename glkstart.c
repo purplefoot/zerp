@@ -22,8 +22,13 @@ glkunix_argumentlist_t glkunix_arguments[] = {
 
 int glkunix_startup_code(glkunix_startup_t *data)
 {
-  if (data->argc > 1)
-    zFilename = data->argv[1];
+  if (data->argc > 1) {
+	zFilename = data->argv[1];
+    zGamefileRef = glk_fileref_create_by_name(fileusage_BinaryMode, zFilename, 0);
+	
+  } else {
+	zGamefileRef = glk_fileref_create_by_prompt(fileusage_BinaryMode, filemode_Read, 0);
+  }
 
   return TRUE;
 }

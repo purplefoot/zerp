@@ -63,8 +63,9 @@ typedef struct zstack_frame {
 } zstack_frame_t;
 
 /* game file */
-extern char * zFilename;
+extern frefid_t zGamefileRef;
 extern int zFilesize;
+extern char * zFilename;
 extern unsigned char * zGamefile;
 extern unsigned char * zMachine;
 

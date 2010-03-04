@@ -25,9 +25,11 @@ all: zerp
 
 zerp: $(OBJS)
 	$(CC) $(OPTIONS)  -I./glkterm -o zerp $(OBJS) $(LIBS)
+	cp zerp vendor/
 
 czerp: $(OBJS)
 	$(CC) $(OPTIONS) $(CGLKINCLUDE) -o czerp $(OBJS) $(CLIBS)
+	cp czerp vendor/
 
 stats:
 	wc -l $(HEADERS) $(SOURCE)

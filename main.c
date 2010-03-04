@@ -13,15 +13,20 @@
 #include <sys/errno.h>
 #include <libgen.h>
 
+#ifdef TARGET_OS_MAC
+#include <GlkClient/glk.h>
+#else
 #include "glk.h"
+#endif /* TARGET_OS_MAC */
 #include "zerp.h"
 
 /* functions */
 static void show_banner();
 
 /* Z-code file mmap */
-char * zFilename = 0;
+frefid_t zGamefileRef = 0;
 int zFilesize = 0;
+char * zFilename = 0;
 
 unsigned char * zGamefile;
 unsigned char * zMachine;
@@ -32,7 +37,7 @@ winid_t statuswin = NULL;
 
 void glk_main(void)
 {
-    int          file;
+    strid_t      file;
     struct stat  info;
     char         errbuff[SMALLBUFF];
   
@@ -44,37 +49,39 @@ void glk_main(void)
 
     glk_set_window(mainwin);
 
-    if (!zFilename) {
+    if (!zGamefileRef) {
       glk_put_string("No gamefile. Usage: zerp gamefile\n");
       return;
     }
   
-    file = open (zFilename, O_RDONLY);
-    if (file < 0)
+    file = glk_stream_open_file(zGamefileRef, filemode_Read, 0);
+    if (file == NULL)
         goto error;
 
-    if (fstat (file, &info) != 0)
-        goto error;
-
-    if (info.st_size < 64)
-    {
+	glk_stream_set_position(file, 0, seekmode_End);
+	zFilesize = glk_stream_get_position(file);
+    if (zFilesize < 64) {
         glk_put_string("This is too small to be a z-code file.\n");
         return;
     }
 
-    zGamefile = mmap (NULL, info.st_size, PROT_READ, MAP_PRIVATE, file, 0);
-    if (zGamefile == MAP_FAILED)
+	glk_stream_set_position(file, 0, seekmode_Start);
+	zGamefile = malloc(zFilesize);
+    zMachine = malloc(zFilesize);
+    if (!zMachine || !zGamefile)
         goto error;
-    zFilesize = info.st_size;
+	glk_get_buffer_stream(file, (char*)zGamefile, zFilesize);
     
     /*
         Gamefile is kept pristine for save compression/restarts. Here we make a copy
         that we can write to.
     */
-    zMachine = malloc(zFilesize);
-    if (!zMachine)
-        goto error;
     memcpy(zMachine, zGamefile, zFilesize);    
+
+    // zGamefile = mmap (NULL, info.st_size, PROT_READ, MAP_PRIVATE, file, 0);
+    // if (zGamefile == MAP_FAILED)
+    //     goto error;
+
     
     // show_banner();
     if (get_byte(0) != Z_VERSION_3) {
@@ -84,7 +91,7 @@ void glk_main(void)
     zerp_run();
     
     free(zMachine);
-    munmap ((void*) zGamefile, info.st_size);
+    // munmap ((void*) zGamefile, info.st_size);
     return;
 
     error:

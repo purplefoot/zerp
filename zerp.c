@@ -6,7 +6,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef TARGET_OS_MAC
+#include <GlkClient/glk.h>
+#else
 #include "glk.h"
+#endif /* TARGET_OS_MAC */
 #include "zerp.h"
 #include "opcodes.h"
 #include "stack.h"

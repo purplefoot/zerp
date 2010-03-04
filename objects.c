@@ -3,7 +3,11 @@
     objects.c : object functions
 */
 
+#ifdef TARGET_OS_MAC
+#include <GlkClient/glk.h>
+#else
 #include "glk.h"
+#endif /* TARGET_OS_MAC */
 #include "zerp.h"
 #include "objects.h"
 
