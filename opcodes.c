@@ -188,34 +188,34 @@ int decode_store_and_branch(packed_addr_t *pc, zinstruction_t *instruction, zwor
                 case MUL:
                 case DIV:
                 case MOD:
-								case CALL_2S:
-                    decode_store_op(pc, instruction, store);
-                    break;
+				case CALL_2S:
+					decode_store_op(pc, instruction, store);
+					break;
                 default:
                     break;
             }
             break;
         case COUNT_0OP:
             switch(instruction->opcode) {
-								case POP:
-									if (zGameVersion >= Z_VERSION_5) {
-										/* catch */
-										decode_store_op(pc, instruction, branch);
-									} else {
-										/* pop */
-									}
+				case POP:
+					if (zGameVersion >= Z_VERSION_5) {
+						/* catch */
+						decode_store_op(pc, instruction, branch);
+					} else {
+						/* pop */
+					}
                 case SAVE:
                 case RESTORE:
-										if (zGameVersion < Z_VERSION_3) {
-	                    decode_branch_op(pc, instruction, branch);
-										} else if (zGameVersion == Z_VERSION_4) {
-											decode_store_op(pc, instruction, branch);
-										} else {
-											/* Illegal */
-										}
-										break;
+					if (zGameVersion < Z_VERSION_3) {
+						decode_branch_op(pc, instruction, branch);
+					} else if (zGameVersion == Z_VERSION_4) {
+						decode_store_op(pc, instruction, branch);
+					} else {
+						/* Illegal */
+					}
+					break;
                 case VERIFY:
-								case PIRACY:
+				case PIRACY:
                     decode_branch_op(pc, instruction, branch);
                     break;
                 default:
@@ -235,12 +235,12 @@ int decode_store_and_branch(packed_addr_t *pc, zinstruction_t *instruction, zwor
                 case GET_PARENT:
                 case GET_PROP_LEN:
                 case LOAD:
-								case CALL_1S:
+				case CALL_1S:
                     decode_store_op(pc, instruction, store);
                     break;
                 case NOT:
-										if (zGameVersion <= Z_VERSION_4)
-											decode_store_op(pc, instruction, store);
+					if (zGameVersion <= Z_VERSION_4)
+						decode_store_op(pc, instruction, store);
                 default:
                     break;
             }
@@ -248,23 +248,23 @@ int decode_store_and_branch(packed_addr_t *pc, zinstruction_t *instruction, zwor
         case COUNT_VAR:
             switch (instruction->opcode) {
                 case CALL:
-								case CALL_VS2:
-								case READ_CHAR:
-								case NOT_V5:
+				case CALL_VS2:
+				case READ_CHAR:
+				case NOT_V5:
                 case RANDOM:
                     decode_store_op(pc, instruction, store);
                     break;
-								case SREAD:
-										if (zGameVersion >= Z_VERSION_5)
-											decode_store_op(pc, instruction, store);
-										break;
-								case SCAN_TABLE:
-										decode_store_op(pc, instruction, store);
-										decode_branch_op(pc, instruction, branch);
-										break;
-								case CHECK_ARG_COUNT:
-										decode_branch_op(pc, instruction, branch);
-										break;
+				case SREAD:
+					if (zGameVersion >= Z_VERSION_5)
+						decode_store_op(pc, instruction, store);
+					break;
+				case SCAN_TABLE:
+					decode_store_op(pc, instruction, store);
+					decode_branch_op(pc, instruction, branch);
+					break;
+				case CHECK_ARG_COUNT:
+					decode_branch_op(pc, instruction, branch);
+					break;
                 default:
                     break;
             }
@@ -361,8 +361,8 @@ void print_zinstruction(packed_addr_t instructionPC, zinstruction_t *instruction
                     glk_put_string(",");
                     print_operand(operands + 1);
                     break;
-								case CALL_2S:
-								case CALL_2N:
+				case CALL_2S:
+				case CALL_2N:
                     glk_printf("%x", unpack(operands->bytes));
                     if ((operands + 1)->type != NONE) {
                         glk_put_string(" (");
@@ -375,7 +375,7 @@ void print_zinstruction(packed_addr_t instructionPC, zinstruction_t *instruction
             break;
         case COUNT_1OP:
             switch (instruction->opcode) {
-								case CALL_1S:
+				case CALL_1S:
 	                glk_printf("%x", unpack(operands->bytes));
 	                if ((operands + 1)->type != NONE) {
 	                    glk_put_string(" (");
@@ -383,17 +383,17 @@ void print_zinstruction(packed_addr_t instructionPC, zinstruction_t *instruction
 	                    glk_put_string(")");
 	                }
 	                break;
-								case NOT:
-									if (zGameVersion > Z_VERSION_4) {
+				case NOT:
+					if (zGameVersion > Z_VERSION_4) {
 		                glk_printf("%x", unpack(operands->bytes));
 		                if ((operands + 1)->type != NONE) {
 		                    glk_put_string(" (");
 		                    print_operand_list(operands + 1);
 		                    glk_put_string(")");
 		                } else {
-											print_operand_list(operands);
-										}
-									}
+							print_operand_list(operands);
+						}
+					}
 	                break;
 
                 default: print_operand_list(operands); break;
@@ -413,8 +413,8 @@ void print_zinstruction(packed_addr_t instructionPC, zinstruction_t *instruction
         case COUNT_VAR:
             switch (instruction->opcode) {
                 case CALL:
-								case CALL_VN:
-								case CALL_VN2:
+				case CALL_VN:
+				case CALL_VN2:
                     glk_printf("%x", unpack(operands->bytes));
                     if ((operands + 1)->type != NONE) {
                         glk_put_string(" (");
@@ -502,7 +502,7 @@ static char * opcode_name(char *buf, zbyte_t opcount, zbyte_t opcode) {
                 case CALL_2N: strcpy(buf, "CALL_2N"); break;
                 case SET_COLOUR: strcpy(buf, "SET_COLOUR"); break;
                 case THROW: strcpy(buf, "THROW"); break;
-								default: strcpy(buf, "UNKNOWN"); break;
+				default: strcpy(buf, "UNKNOWN"); break;
             }
             break;
         case COUNT_1OP:
@@ -523,13 +523,13 @@ static char * opcode_name(char *buf, zbyte_t opcount, zbyte_t opcode) {
                 case PRINT_PADDR: strcpy(buf, "PRINT_PADDR"); break;
                 case LOAD: strcpy(buf, "LOAD"); break;
                 case NOT:
-									if (zGameVersion > Z_VERSION_4) {
-										strcpy(buf, "CALL_1N");
-									} else {
-										strcpy(buf, "NOT");
-									}
-									break;
-								default: strcpy(buf, "UNKNOWN"); break;
+					if (zGameVersion > Z_VERSION_4) {
+						strcpy(buf, "CALL_1N");
+					} else {
+						strcpy(buf, "NOT");
+					}
+					break;
+				default: strcpy(buf, "UNKNOWN"); break;
             }
             break;
         case COUNT_0OP:
@@ -544,28 +544,28 @@ static char * opcode_name(char *buf, zbyte_t opcount, zbyte_t opcode) {
                 case RESTART: strcpy(buf, "RESTART"); break;
                 case RET_POPPED: strcpy(buf, "RET_POPPED"); break;
                 case POP:
-									if (zGameVersion > Z_VERSION_4) {
-										strcpy(buf, "CATCH");
-									} else {
-										strcpy(buf, "POP");
-									}
-									break;
+					if (zGameVersion > Z_VERSION_4) {
+						strcpy(buf, "CATCH");
+					} else {
+						strcpy(buf, "POP");
+					}
+					break;
                 case QUIT: strcpy(buf, "QUIT"); break;
                 case NEW_LINE: strcpy(buf, "NEW_LINE"); break;
                 case SHOW_STATUS: strcpy(buf, "SHOW_STATUS"); break;
                 case VERIFY: strcpy(buf, "VERIFY"); break;
-								default: strcpy(buf, "UNKNOWN"); break;
+				default: strcpy(buf, "UNKNOWN"); break;
             }
             break;
         case COUNT_VAR:
             switch (opcode) {
                 case CALL:
-									if (zGameVersion > Z_VERSION_4) {
-										strcpy(buf, "CALL_VS");
-									} else {
-										strcpy(buf, "CALL");
-									}
-									break;
+					if (zGameVersion > Z_VERSION_4) {
+						strcpy(buf, "CALL_VS");
+					} else {
+						strcpy(buf, "CALL");
+					}
+					break;
                 case STOREW: strcpy(buf, "STOREW"); break;
                 case STOREB: strcpy(buf, "STOREB"); break;
                 case PUT_PROP: strcpy(buf, "PUT_PROP"); break;
@@ -597,7 +597,7 @@ static char * opcode_name(char *buf, zbyte_t opcount, zbyte_t opcode) {
                 case COPY_TABLE: strcpy(buf, "COPY_TABLE"); break;
                 case PRINT_TABLE: strcpy(buf, "PRINT_TABLE"); break;
                 case CHECK_ARG_COUNT: strcpy(buf, "CHECK_ARG_COUNT"); break;
-								default: strcpy(buf, "UNKNOWN"); break;
+				default: strcpy(buf, "UNKNOWN"); break;
             }
             break;
         default:

@@ -59,9 +59,9 @@ typedef struct zstack_frame {
     packed_addr_t pc;
     zword_t *sp;
     zbyte_t ret_store;
-		zbyte_t ret_keep;
+	zbyte_t ret_keep;
     zword_t locals[16];
-		zbyte_t args;
+	zbyte_t args;
 } zstack_frame_t;
 
 /* game file */
@@ -127,10 +127,10 @@ extern packed_addr_t instructionPC;
 #define HEADER_EXT_TAB      0x36
 
 /* We attempt to support version 3 - 8 games (but not 6)*/
-#define Z_VERSION_3         0x03
-#define Z_VERSION_4					0x04
-#define Z_VERSION_5					0x05
-#define Z_VERSION_8					0x08
+#define Z_VERSION_3			0x03
+#define Z_VERSION_4			0x04
+#define Z_VERSION_5			0x05
+#define Z_VERSION_8			0x08
 
 /* function declarations */
 int zerp_run();

@@ -113,7 +113,7 @@ static void debug_print_callstack(int frame) {
         while (i >= 0) {
             aframe = zCallStack + i;
             glk_printf("%2d (%08x): pc:%05x sp:%08x throw_ret:%s, args: %d ret:",
-										i, aframe, aframe->pc, aframe->sp, (aframe->ret_keep ? "throw" : "keep"), aframe->args);
+						i, aframe, aframe->pc, aframe->sp, (aframe->ret_keep ? "throw" : "keep"), aframe->args);
             if (aframe->ret_store == 0) {
                 glk_put_string("SP");
             } else if (aframe->ret_store > 0 && aframe->ret_store < 0x10) {
@@ -130,7 +130,7 @@ static void debug_print_callstack(int frame) {
         }
         aframe = zCallStack + frame;
         glk_printf("Call frame %2d (%08x):\n pc:%05x\n throw_ret:%s\n args: %d\n sp:%08x - ",
-								frame, aframe, aframe->pc, (aframe->ret_keep ? "throw" : "keep"), aframe->args, aframe->sp);
+						frame, aframe, aframe->pc, (aframe->ret_keep ? "throw" : "keep"), aframe->args, aframe->sp);
         if (frame > 0) {
             stack_top = aframe->sp; stack_bottom = (zCallStack + (frame -1))->sp;
             count = 0;

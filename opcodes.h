@@ -89,10 +89,10 @@ static void print_operand_list(zoperand_t *op_ptr);
 #define MUL                 0x16
 #define DIV                 0x17
 #define MOD                 0x18
-#define CALL_2S							0x19
-#define CALL_2N							0x1a
-#define SET_COLOUR					0x1b
-#define THROW								0x1c
+#define CALL_2S				0x19
+#define CALL_2N				0x1a
+#define SET_COLOUR			0x1b
+#define THROW				0x1c
 
 /* 1OP codes */
 #define JZ                  0x00
@@ -103,7 +103,7 @@ static void print_operand_list(zoperand_t *op_ptr);
 #define INC                 0x05
 #define DEC                 0x06
 #define PRINT_ADDR          0x07
-#define CALL_1S							0x08
+#define CALL_1S				0x08
 #define REMOVE_OBJ          0x09
 #define PRINT_OBJ           0x0a
 #define RET                 0x0b
@@ -126,7 +126,7 @@ static void print_operand_list(zoperand_t *op_ptr);
 #define NEW_LINE            0x0b
 #define SHOW_STATUS         0x0c
 #define VERIFY              0x0d
-#define PIRACY							0x0f
+#define PIRACY				0x0f
 /* VAR codes */
 #define CALL                0x00
 #define STOREW              0x01
@@ -140,36 +140,36 @@ static void print_operand_list(zoperand_t *op_ptr);
 #define PULL                0x09
 #define SPLIT_WINDOW        0x0a
 #define SET_WINDOW          0x0b
-#define CALL_VS2	          0x0c
+#define CALL_VS2			0x0c
 #define ERASE_WINDOW        0x0d
 #define ERASE_LINE          0x0e
 #define SET_CURSOR          0x0f
 #define GET_CURSOR          0x10
 #define SET_TEXT_STYLE      0x11
-#define BUFFER_MODE		      0x12
+#define BUFFER_MODE			0x12
 #define OUTPUT_STREAM       0x13
 #define INPUT_STREAM        0x14
 #define SOUND_EFFECT        0x15
-#define READ_CHAR		        0x16
+#define READ_CHAR			0x16
 #define SCAN_TABLE	        0x17
-#define NOT_V5			        0x18
-#define CALL_VN			        0x19
-#define CALL_VN2		        0x1a
-#define TOKENISE    		    0x1b
-#define ENCODE_TEXT      	  0x1c
-#define COPY_TABLE	        0x1d
-#define PRINT_TABLE					0x1e
-#define CHECK_ARG_COUNT			0x1f
+#define NOT_V5				0x18
+#define CALL_VN				0x19
+#define CALL_VN2			0x1a
+#define TOKENISE			0x1b
+#define ENCODE_TEXT			0x1c
+#define COPY_TABLE			0x1d
+#define PRINT_TABLE			0x1e
+#define CHECK_ARG_COUNT		0x1f
 /* EXT codes */
-#define SAVE_TABLE					0x00
-#define RESTORE_TABLE				0x01
-#define LOG_SHIFT						0x02
-#define ART_SHIFT						0x03
-#define SET_FONT						0x04
-#define SAVE_UNDO						0x09
-#define RESTORE_UNDO				0x0a
-#define PRINT_UNICODE				0x0b
-#define CHECK_UNICODE				0x0c
+#define SAVE_TABLE			0x00
+#define RESTORE_TABLE		0x01
+#define LOG_SHIFT			0x02
+#define ART_SHIFT			0x03
+#define SET_FONT			0x04
+#define SAVE_UNDO			0x09
+#define RESTORE_UNDO		0x0a
+#define PRINT_UNICODE		0x0b
+#define CHECK_UNICODE		0x0c
 
 /* printing flags */
 #define NO_BYTES            0x01
