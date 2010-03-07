@@ -31,6 +31,7 @@ zword_t zDictionaryHeader = 0;
 zword_t zDictionary = 0;
 packed_addr_t zPC = 0;
 packed_addr_t instructionPC = 0;
+int zPackedShift = 0;
 
 static int test_je(zword_t value, zoperand_t *operands);
 
@@ -60,9 +61,19 @@ int zerp_run() {
     zGlobals = get_word(GLOBALS);
     zProperties = get_word(OBJECT_TABLE);
     zObjects = zProperties + 62;
-	zDictionaryHeader = get_word(DICTIONARY);
-	zDictionary = zDictionaryHeader + 4 + get_byte(zDictionaryHeader);
-
+		zDictionaryHeader = get_word(DICTIONARY);
+		zDictionary = zDictionaryHeader + 4 + get_byte(zDictionaryHeader);
+		switch (zGameVersion) {
+				case Z_VERSION_3:
+					zPackedShift = 1;
+					break;
+				case Z_VERSION_8:
+					zPackedShift = 3;
+					break;
+				default:
+					zPackedShift = 2;
+					break;
+		}
     set_header_flags();
 
     running = TRUE;
@@ -78,9 +89,9 @@ int zerp_run() {
         
         zPC += decode_instruction(zPC, &instruction, operands, &store_operand, &branch_operand);
 
-        // print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
+        print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
         // if (zPC == 0x5d00)
-        // 	        debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
+        	        // debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
 
         switch (instruction.count) {
             case COUNT_2OP:
@@ -150,15 +161,15 @@ int zerp_run() {
                         insert_object(get_operand(0), get_operand(1));
                         break;
                     case LOADW:
-						scratch1 = get_operand(0);
-						scratch2 = get_operand(1);
-						LOG(ZDEBUG, "\nLoading word at #%x", scratch1 + scratch2 * 2)
+												scratch1 = get_operand(0);
+												scratch2 = get_operand(1);
+												LOG(ZDEBUG, "\nLoading word at #%x", scratch1 + scratch2 * 2)
                         store_op(get_word(scratch1 + scratch2 * 2))
                         break;
                     case LOADB:
-						scratch1 = get_operand(0);
-						scratch2 = get_operand(1);
-						LOG(ZDEBUG, "\nLoading byte at #%x", scratch1 + scratch2)
+												scratch1 = get_operand(0);
+												scratch2 = get_operand(1);
+												LOG(ZDEBUG, "\nLoading byte at #%x", scratch1 + scratch2)
                         store_op(get_byte(scratch1 + scratch2))
                         break;
                     case GET_PROP:
@@ -185,6 +196,18 @@ int zerp_run() {
                     case MOD:
                         store_op((signed short)get_operand(0) % (signed short)get_operand(1))
                         break;
+										case CALL_2S:
+												unimplemented("CALL_2S")
+												break;
+										case CALL_2N:
+												unimplemented("CALL_2N")
+												break;
+										case SET_COLOUR:
+												unimplemented("SET_COLOUR")
+												break;
+										case THROW:
+												unimplemented("THROW")
+												break;
                     default:
                         LOG(ZERROR, "Unknown opcode: %#04x", instruction.bytes);
                         fatal_error("bad op code.");
@@ -232,6 +255,9 @@ int zerp_run() {
                     case PRINT_ADDR:
                         print_zstring(get_operand(0));
                         break;
+										case CALL_1S:
+												unimplemented("CALL_1S");
+												break;
                     case REMOVE_OBJ:
                         remove_object(get_operand(0));
                         break;
@@ -255,7 +281,11 @@ int zerp_run() {
                         }
                         break;
                     case NOT:
-                        store_op(~get_operand(0))
+												if (zGameVersion <= Z_VERSION_4) {
+	                        store_op(~get_operand(0))
+												} else {
+													unimplemented("CALL_1N")
+												}
                         break;
                     default:
                         LOG(ZERROR, "Unknown opcode: %#04x", instruction.bytes);
@@ -281,10 +311,22 @@ int zerp_run() {
                     case NOP:
                         break;
                     case SAVE:
-                        branch_op(1)
+												if (zGameVersion < Z_VERSION_3) {
+	                        branch_op(1)
+												} else if (zGameVersion == Z_VERSION_4) {
+													store_op(1)
+												} else {
+	                        fatal_error("SAVE illegal in > V4");
+												}
                         break;
                     case RESTORE:
-                        branch_op(1)
+												if (zGameVersion < Z_VERSION_3) {
+		                      branch_op(1)
+												} else if (zGameVersion == Z_VERSION_4) {
+													store_op(1)
+												} else {
+		                      fatal_error("RESTORE illegal in > V4");
+												}
                         break;
                     case RESTART:
                         break;
@@ -292,7 +334,11 @@ int zerp_run() {
                         return_zroutine(stack_pop());
                         break;
                     case POP:
-                        stack_pop();
+												if (zGameVersion >= Z_VERSION_5) {
+													unimplemented("CATCH");
+												} else {
+		                      stack_pop();
+												}
                         break;
                     case QUIT:
                         running = FALSE;
@@ -301,8 +347,13 @@ int zerp_run() {
                         glk_put_string("\n");
                         break;
                     case SHOW_STATUS:
-						show_status_line();
+												if (zGameVersion < Z_VERSION_4) {
+													show_status_line();
+												} else {
+		                      fatal_error("SHOW_STATUS illegal in > V3");
+												}
                         break;
+										case PIRACY:
                     case VERIFY:
                         branch_op(1)
                         break;
@@ -314,7 +365,7 @@ int zerp_run() {
             case COUNT_VAR:
                 switch (instruction.opcode) {
                     case CALL:
-                        call_zroutine(unpack(get_operand(0)), &operands[1], store_operand);
+                        call_zroutine(unpack(get_operand(0)), &operands[1], store_operand, TRUE);
                         break;
                     case STOREW:
                         scratch1 = get_operand(0); scratch2 = get_operand(1); scratch3 = get_operand(2);
@@ -330,8 +381,14 @@ int zerp_run() {
                         put_property(get_operand(0), get_operand(1), get_operand(2));
                         break;
                     case SREAD:
-						show_status_line();
-                        read(get_operand(0), get_operand(1));
+												if (zGameVersion <= Z_VERSION_4) {
+													show_status_line();
+	                        read(get_operand(0), get_operand(1));
+												} else if (zGameVersion == Z_VERSION_4) {
+	                        read(get_operand(0), get_operand(1));
+												} else {
+													store_op(read(get_operand(0), get_operand(1)))
+												}
                         break;
                     case PRINT_CHAR:
                         glk_put_char(get_operand(0));
@@ -340,15 +397,15 @@ int zerp_run() {
                         glk_printf("%d", (signed short)get_operand(0));
                         break;
                     case RANDOM:
-						scratch1 = (signed short) get_operand(0);
+												scratch1 = (signed short) get_operand(0);
                         if (scratch1 < (zword_t) 0) {
                             srandom((unsigned short)scratch1);
                             variable_set(store_operand, 0);
                         } else if (scratch1 == 0) {
                             srandom(time(0));
                             variable_set(store_operand, 0);
-						} else {
-							scratch2 = (random() % scratch1) + 1;
+												} else {
+														scratch2 = (random() % scratch1) + 1;
                             variable_set(store_operand, scratch2);
                         }
                         break;
@@ -361,10 +418,50 @@ int zerp_run() {
                         break;
                     case SPLIT_WINDOW:
                     case SET_WINDOW:
+												break;
+										case CALL_VS2:
+												unimplemented("CALL_VS2");
+												break;
+										case ERASE_WINDOW:
+										case ERASE_LINE:
+										case SET_CURSOR:
+										case GET_CURSOR:
+										case SET_TEXT_STYLE:
+										case BUFFER_MODE:
                     case OUTPUT_STREAM:
                     case INPUT_STREAM:
                     case SOUND_EFFECT:
                         break;
+										case READ_CHAR:
+												unimplemented("READ_CHAR")
+												break;
+										case SCAN_TABLE:
+												unimplemented("SCAN_TABLE")
+												break;
+										case NOT_V5:
+												unimplemented("NOT_V5")
+												break;
+										case CALL_VN:
+	                    call_zroutine(unpack(get_operand(0)), &operands[1], store_operand, FALSE);
+												break;
+										case CALL_VN2:
+												unimplemented("CALL_VN2")
+												break;
+										case TOKENISE:
+												unimplemented("TOKENISE")
+												break;
+										case ENCODE_TEXT:
+												unimplemented("ENCODE_TEXT")
+												break;
+										case COPY_TABLE:
+												unimplemented("COPY_TABLE")
+												break;
+										case PRINT_TABLE:
+												unimplemented("PRINT_TABLE")
+												break;
+										case CHECK_ARG_COUNT:
+												unimplemented("CHECK_ARG_COUNT")
+												break;
                     default:
                         LOG(ZERROR, "Unknown opcode: %#04x", instruction.bytes);
                         fatal_error("bad op code.");

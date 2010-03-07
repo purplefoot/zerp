@@ -112,7 +112,8 @@ static void debug_print_callstack(int frame) {
         i = zFP - zCallStack;
         while (i >= 0) {
             aframe = zCallStack + i;
-            glk_printf("%2d (%08x): pc:%05x sp:%08x ret:", i, aframe, aframe->pc, aframe->sp);
+            glk_printf("%2d (%08x): pc:%05x sp:%08x throw_ret:%s, args: %d ret:",
+										i, aframe, aframe->pc, aframe->sp, (aframe->ret_keep ? "throw" : "keep"), aframe->args);
             if (aframe->ret_store == 0) {
                 glk_put_string("SP");
             } else if (aframe->ret_store > 0 && aframe->ret_store < 0x10) {
@@ -128,7 +129,8 @@ static void debug_print_callstack(int frame) {
             return;
         }
         aframe = zCallStack + frame;
-        glk_printf("Call frame %2d (%08x):\n pc:%05x\n sp:%08x - ", frame, aframe, aframe->pc, aframe->sp);
+        glk_printf("Call frame %2d (%08x):\n pc:%05x\n throw_ret:%s\n args: %d\n sp:%08x - ",
+								frame, aframe, aframe->pc, (aframe->ret_keep ? "throw" : "keep"), aframe->args, aframe->sp);
         if (frame > 0) {
             stack_top = aframe->sp; stack_bottom = (zCallStack + (frame -1))->sp;
             count = 0;
@@ -136,7 +138,7 @@ static void debug_print_callstack(int frame) {
                 glk_printf(" %04x", *--stack_top);
         }
         
-        glk_put_string("\nreturn value in:");
+        glk_put_string("\n return value in:");
         if (aframe->ret_store == 0) {
             glk_put_string("SP");
         } else if (aframe->ret_store > 0 && aframe->ret_store < 0x10) {

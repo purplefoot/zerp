@@ -188,6 +188,7 @@ int decode_store_and_branch(packed_addr_t *pc, zinstruction_t *instruction, zwor
                 case MUL:
                 case DIV:
                 case MOD:
+								case CALL_2S:
                     decode_store_op(pc, instruction, store);
                     break;
                 default:
@@ -196,9 +197,25 @@ int decode_store_and_branch(packed_addr_t *pc, zinstruction_t *instruction, zwor
             break;
         case COUNT_0OP:
             switch(instruction->opcode) {
+								case POP:
+									if (zGameVersion >= Z_VERSION_5) {
+										/* catch */
+										decode_store_op(pc, instruction, branch);
+									} else {
+										/* pop */
+									}
                 case SAVE:
                 case RESTORE:
+										if (zGameVersion < Z_VERSION_3) {
+	                    decode_branch_op(pc, instruction, branch);
+										} else if (zGameVersion == Z_VERSION_4) {
+											decode_store_op(pc, instruction, branch);
+										} else {
+											/* Illegal */
+										}
+										break;
                 case VERIFY:
+								case PIRACY:
                     decode_branch_op(pc, instruction, branch);
                     break;
                 default:
@@ -218,9 +235,12 @@ int decode_store_and_branch(packed_addr_t *pc, zinstruction_t *instruction, zwor
                 case GET_PARENT:
                 case GET_PROP_LEN:
                 case LOAD:
-                case NOT:
+								case CALL_1S:
                     decode_store_op(pc, instruction, store);
                     break;
+                case NOT:
+										if (zGameVersion <= Z_VERSION_4)
+											decode_store_op(pc, instruction, store);
                 default:
                     break;
             }
@@ -228,9 +248,23 @@ int decode_store_and_branch(packed_addr_t *pc, zinstruction_t *instruction, zwor
         case COUNT_VAR:
             switch (instruction->opcode) {
                 case CALL:
+								case CALL_VS2:
+								case READ_CHAR:
+								case NOT_V5:
                 case RANDOM:
                     decode_store_op(pc, instruction, store);
                     break;
+								case SREAD:
+										if (zGameVersion >= Z_VERSION_5)
+											decode_store_op(pc, instruction, store);
+										break;
+								case SCAN_TABLE:
+										decode_store_op(pc, instruction, store);
+										decode_branch_op(pc, instruction, branch);
+										break;
+								case CHECK_ARG_COUNT:
+										decode_branch_op(pc, instruction, branch);
+										break;
                 default:
                     break;
             }
@@ -327,11 +361,41 @@ void print_zinstruction(packed_addr_t instructionPC, zinstruction_t *instruction
                     glk_put_string(",");
                     print_operand(operands + 1);
                     break;
+								case CALL_2S:
+								case CALL_2N:
+                    glk_printf("%x", unpack(operands->bytes));
+                    if ((operands + 1)->type != NONE) {
+                        glk_put_string(" (");
+                        print_operand_list(operands + 1);
+                        glk_put_string(")");
+                    }
+                    break;
                 default: print_operand_list(operands); break;
             }
             break;
         case COUNT_1OP:
             switch (instruction->opcode) {
+								case CALL_1S:
+	                glk_printf("%x", unpack(operands->bytes));
+	                if ((operands + 1)->type != NONE) {
+	                    glk_put_string(" (");
+	                    print_operand_list(operands + 1);
+	                    glk_put_string(")");
+	                }
+	                break;
+								case NOT:
+									if (zGameVersion > Z_VERSION_4) {
+		                glk_printf("%x", unpack(operands->bytes));
+		                if ((operands + 1)->type != NONE) {
+		                    glk_put_string(" (");
+		                    print_operand_list(operands + 1);
+		                    glk_put_string(")");
+		                } else {
+											print_operand_list(operands);
+										}
+									}
+	                break;
+
                 default: print_operand_list(operands); break;
             }
             break;
@@ -349,6 +413,8 @@ void print_zinstruction(packed_addr_t instructionPC, zinstruction_t *instruction
         case COUNT_VAR:
             switch (instruction->opcode) {
                 case CALL:
+								case CALL_VN:
+								case CALL_VN2:
                     glk_printf("%x", unpack(operands->bytes));
                     if ((operands + 1)->type != NONE) {
                         glk_put_string(" (");
@@ -432,6 +498,11 @@ static char * opcode_name(char *buf, zbyte_t opcount, zbyte_t opcode) {
                 case MUL: strcpy(buf, "MUL"); break;
                 case DIV: strcpy(buf, "DIV"); break;
                 case MOD: strcpy(buf, "MOD"); break;
+                case CALL_2S: strcpy(buf, "CALL_2S"); break;
+                case CALL_2N: strcpy(buf, "CALL_2N"); break;
+                case SET_COLOUR: strcpy(buf, "SET_COLOUR"); break;
+                case THROW: strcpy(buf, "THROW"); break;
+								default: strcpy(buf, "UNKNOWN"); break;
             }
             break;
         case COUNT_1OP:
@@ -444,13 +515,21 @@ static char * opcode_name(char *buf, zbyte_t opcount, zbyte_t opcode) {
                 case INC: strcpy(buf, "INC"); break;
                 case DEC: strcpy(buf, "DEC"); break;
                 case PRINT_ADDR: strcpy(buf, "PRINT_ADDR"); break;
+                case CALL_1S: strcpy(buf, "CALL_1S"); break;
                 case REMOVE_OBJ: strcpy(buf, "REMOVE_OBJ"); break;
                 case PRINT_OBJ: strcpy(buf, "PRINT_OBJ"); break;
                 case RET: strcpy(buf, "RET"); break;
                 case JUMP: strcpy(buf, "JUMP"); break;
                 case PRINT_PADDR: strcpy(buf, "PRINT_PADDR"); break;
                 case LOAD: strcpy(buf, "LOAD"); break;
-                case NOT: strcpy(buf, "NOT"); break;
+                case NOT:
+									if (zGameVersion > Z_VERSION_4) {
+										strcpy(buf, "CALL_1N");
+									} else {
+										strcpy(buf, "NOT");
+									}
+									break;
+								default: strcpy(buf, "UNKNOWN"); break;
             }
             break;
         case COUNT_0OP:
@@ -464,16 +543,29 @@ static char * opcode_name(char *buf, zbyte_t opcount, zbyte_t opcode) {
                 case RESTORE: strcpy(buf, "RESTORE"); break;
                 case RESTART: strcpy(buf, "RESTART"); break;
                 case RET_POPPED: strcpy(buf, "RET_POPPED"); break;
-                case POP: strcpy(buf, "POP"); break;
+                case POP:
+									if (zGameVersion > Z_VERSION_4) {
+										strcpy(buf, "CATCH");
+									} else {
+										strcpy(buf, "POP");
+									}
+									break;
                 case QUIT: strcpy(buf, "QUIT"); break;
                 case NEW_LINE: strcpy(buf, "NEW_LINE"); break;
                 case SHOW_STATUS: strcpy(buf, "SHOW_STATUS"); break;
                 case VERIFY: strcpy(buf, "VERIFY"); break;
+								default: strcpy(buf, "UNKNOWN"); break;
             }
             break;
         case COUNT_VAR:
             switch (opcode) {
-                case CALL: strcpy(buf, "CALL"); break;
+                case CALL:
+									if (zGameVersion > Z_VERSION_4) {
+										strcpy(buf, "CALL_VS");
+									} else {
+										strcpy(buf, "CALL");
+									}
+									break;
                 case STOREW: strcpy(buf, "STOREW"); break;
                 case STOREB: strcpy(buf, "STOREB"); break;
                 case PUT_PROP: strcpy(buf, "PUT_PROP"); break;
@@ -485,9 +577,27 @@ static char * opcode_name(char *buf, zbyte_t opcount, zbyte_t opcode) {
                 case PULL: strcpy(buf, "PULL"); break;
                 case SPLIT_WINDOW: strcpy(buf, "SPLIT_WINDOW"); break;
                 case SET_WINDOW: strcpy(buf, "SET_WINDOW"); break;
+                case CALL_VS2: strcpy(buf, "CALL_VS2"); break;
+                case ERASE_WINDOW: strcpy(buf, "ERASE_WINDOW"); break;
+                case ERASE_LINE: strcpy(buf, "ERASE_LINE"); break;
+                case SET_CURSOR: strcpy(buf, "SET_CURSOR"); break;
+                case GET_CURSOR: strcpy(buf, "GET_CURSOR"); break;
+                case SET_TEXT_STYLE: strcpy(buf, "SET_TEXT_STYLE"); break;
+                case BUFFER_MODE: strcpy(buf, "BUFFER_MODE"); break;
                 case OUTPUT_STREAM: strcpy(buf, "OUTPUT_STREAM"); break;
                 case INPUT_STREAM: strcpy(buf, "INPUT_STREAM"); break;
                 case SOUND_EFFECT: strcpy(buf, "SOUND_EFFECT"); break;
+                case READ_CHAR: strcpy(buf, "READ_CHAR"); break;
+                case SCAN_TABLE: strcpy(buf, "SCAN_TABLE"); break;
+                case NOT_V5: strcpy(buf, "NOT"); break;
+                case CALL_VN: strcpy(buf, "CALL_VN"); break;
+                case CALL_VN2: strcpy(buf, "CALL_VN2"); break;
+                case TOKENISE: strcpy(buf, "TOKENISE"); break;
+                case ENCODE_TEXT: strcpy(buf, "ENCODE_TEXT"); break;
+                case COPY_TABLE: strcpy(buf, "COPY_TABLE"); break;
+                case PRINT_TABLE: strcpy(buf, "PRINT_TABLE"); break;
+                case CHECK_ARG_COUNT: strcpy(buf, "CHECK_ARG_COUNT"); break;
+								default: strcpy(buf, "UNKNOWN"); break;
             }
             break;
         default:

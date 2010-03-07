@@ -27,7 +27,7 @@ static void show_banner();
 frefid_t zGamefileRef = 0;
 int zFilesize = 0;
 char * zFilename = 0;
-
+int zGameVersion = 0;
 unsigned char * zGamefile;
 unsigned char * zMachine;
 
@@ -58,19 +58,19 @@ void glk_main(void)
     if (file == NULL)
         goto error;
 
-	glk_stream_set_position(file, 0, seekmode_End);
-	zFilesize = glk_stream_get_position(file);
-    if (zFilesize < 64) {
-        glk_put_string("This is too small to be a z-code file.\n");
-        return;
-    }
+		glk_stream_set_position(file, 0, seekmode_End);
+		zFilesize = glk_stream_get_position(file);
+	    if (zFilesize < 64) {
+	        glk_put_string("This is too small to be a z-code file.\n");
+	        return;
+	    }
 
-	glk_stream_set_position(file, 0, seekmode_Start);
-	zGamefile = malloc(zFilesize);
-    zMachine = malloc(zFilesize);
-    if (!zMachine || !zGamefile)
-        goto error;
-	glk_get_buffer_stream(file, (char*)zGamefile, zFilesize);
+		glk_stream_set_position(file, 0, seekmode_Start);
+		zGamefile = malloc(zFilesize);
+	    zMachine = malloc(zFilesize);
+	    if (!zMachine || !zGamefile)
+	        goto error;
+		glk_get_buffer_stream(file, (char*)zGamefile, zFilesize);
     
     /*
         Gamefile is kept pristine for save compression/restarts. Here we make a copy
@@ -84,8 +84,9 @@ void glk_main(void)
 
     
     // show_banner();
-    if (get_byte(0) != Z_VERSION_3) {
-        glk_printf("Unsupported version: this file needs version %d.", get_byte(0));
+		zGameVersion = get_byte(0);
+    if (!(zGameVersion >= Z_VERSION_3 && zGameVersion <= Z_VERSION_5)) {
+        glk_printf("Unsupported version: this file needs version %d.", zGameVersion);
         return;
     }
     zerp_run();

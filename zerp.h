@@ -53,13 +53,15 @@ typedef unsigned int packed_addr_t;
 #define store_word_addr(addr) store_word(addr << 1)
 #define get_packed_addr(addr) get_word(addr) << 1
 #define store_packed_addr(addr) store_word(addr >> 1)
-#define unpack(addr) addr << 1
+#define unpack(addr) addr << zPackedShift
 
 typedef struct zstack_frame {
     packed_addr_t pc;
     zword_t *sp;
     zbyte_t ret_store;
+		zbyte_t ret_keep;
     zword_t locals[16];
+		zbyte_t args;
 } zstack_frame_t;
 
 /* game file */
@@ -68,6 +70,8 @@ extern int zFilesize;
 extern char * zFilename;
 extern unsigned char * zGamefile;
 extern unsigned char * zMachine;
+extern int zGameVersion;
+extern int zPackedShift;
 
 /* z-machine stack */
 extern zword_t * zStack;
@@ -122,8 +126,11 @@ extern packed_addr_t instructionPC;
 #define ALPHABET_TAB        0x34
 #define HEADER_EXT_TAB      0x36
 
-/* We only like version 3 games */
+/* We attempt to support version 3 - 8 games (but not 6)*/
 #define Z_VERSION_3         0x03
+#define Z_VERSION_4					0x04
+#define Z_VERSION_5					0x05
+#define Z_VERSION_8					0x08
 
 /* function declarations */
 int zerp_run();
@@ -150,4 +157,5 @@ extern winid_t statuswin;
 
 #define store_op(store_exp) variable_set(store_operand, store_exp);
 
+#define unimplemented(opcode) LOG(ZERROR, "Unimplemented opcode:%s", opcode); fatal_error("UNIMPLEMENTED");
 #endif /* ZERP_H */
