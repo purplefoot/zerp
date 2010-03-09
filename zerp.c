@@ -89,7 +89,7 @@ int zerp_run() {
         
         zPC += decode_instruction(zPC, &instruction, operands, &store_operand, &branch_operand);
 
-        print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
+        // print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
         // if (zPC == 0x5d00)
         	        // debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
 
@@ -197,10 +197,10 @@ int zerp_run() {
                         store_op((signed short)get_operand(0) % (signed short)get_operand(1))
                         break;
 					case CALL_2S:
-							unimplemented("CALL_2S")
+							call_zroutine(unpack(get_operand(0)), &operands[1], store_operand, TRUE);
 							break;
 					case CALL_2N:
-							unimplemented("CALL_2N")
+							call_zroutine(unpack(get_operand(0)), &operands[1], store_operand, FALSE);
 							break;
 					case SET_COLOUR:
 							unimplemented("SET_COLOUR")
@@ -256,8 +256,8 @@ int zerp_run() {
                         print_zstring(get_operand(0));
                         break;
 					case CALL_1S:
-							unimplemented("CALL_1S");
-							break;
+						call_zroutine(unpack(get_operand(0)), &operands[1], store_operand, TRUE);
+						break;
                     case REMOVE_OBJ:
                         remove_object(get_operand(0));
                         break;
@@ -284,7 +284,7 @@ int zerp_run() {
 						if (zGameVersion <= Z_VERSION_4) {
 	                        store_op(~get_operand(0))
 						} else {
-							unimplemented("CALL_1N")
+							call_zroutine(unpack(get_operand(0)), &operands[1], store_operand, FALSE);
 						}
                         break;
                     default:
@@ -460,7 +460,11 @@ int zerp_run() {
 						unimplemented("PRINT_TABLE")
 						break;
 					case CHECK_ARG_COUNT:
-						unimplemented("CHECK_ARG_COUNT")
+						scratch1 = get_operand(0) - 1;
+						scratch2 = zFP->args >> scratch1;
+						scratch3 = scratch2 & 1;
+						branch_op(scratch3)
+						// branch_op(((zFP->args >> (get_operand(0) - 1)) & 1))
 						break;
                     default:
                         LOG(ZERROR, "Unknown opcode: %#04x", instruction.bytes);
