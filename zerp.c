@@ -518,4 +518,8 @@ static int test_je(zword_t value, zoperand_t *operands) {
 static void set_header_flags() {
     store_byte(TERP_NUMBER, 3);
     store_byte(TERP_VERSION, '0');
+
+	/* FIXME: quick hack - fake a 80x24 screen for Infocom later games */
+	store_byte(SCREEN_WIDTH, 80);
+	store_byte(SCREEN_HEIGHT, 24);
 }
