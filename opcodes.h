@@ -57,6 +57,7 @@ static void print_operand_list(zoperand_t *op_ptr);
 #define COUNT_1OP           0x1
 #define COUNT_2OP           0x2
 #define COUNT_VAR           0x3
+#define COUNT_EXT			0x4
 
 #define OPCODE_4BIT         0x0f
 #define OPCODE_5BIT         0x1f

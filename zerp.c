@@ -471,6 +471,28 @@ int zerp_run() {
                         fatal_error("bad op code.");
                 }
                 break;
+			case COUNT_EXT:
+				switch (instruction.opcode) {
+					case SAVE_TABLE:
+						unimplemented("SAVE_TABLE");
+						break;
+					case RESTORE_TABLE:
+						unimplemented("RESTORE_TABLE");
+						break;
+					case LOG_SHIFT:
+						unimplemented("LOG_SHIFT");
+						break;
+					case ART_SHIFT:
+						unimplemented("ART_SHIFT");
+						break;
+					case SET_FONT:
+					case SAVE_UNDO:
+					case RESTORE_UNDO:
+					case PRINT_UNICODE:
+					case CHECK_UNICODE:
+						break;
+				}
+				break;
             default:
                 LOG(ZERROR, "Unknown opcode: %#04x", instruction.bytes);
                 fatal_error("bad opcode");

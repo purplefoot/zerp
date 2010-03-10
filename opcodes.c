@@ -34,9 +34,10 @@ int decode_instruction(packed_addr_t pc, zinstruction_t *instruction, zoperand_t
             In extended form, the operand count is VAR. The opcode number is given in a second
             opcode byte.
         */
-        instruction->opcode = instruction->bytes;
+        instruction->opcode = get_byte(pc++);
+		instruction->bytes = instruction->bytes << 8 | instruction->opcode;
         instruction->form = OP_VARIABLE;
-        LOG(ZERROR, "Unsupported extended opcode %#02x @ %#04x\n", get_byte(pc++), startpc);
+		instruction->count = COUNT_EXT;  /* Not really a Zmachine form */
         decode_variable(&pc, instruction, get_byte(pc++), operands);
     } else if (instruction->bytes >> 6 == OP_VARIABLE ) {
         /*
@@ -283,6 +284,22 @@ int decode_store_and_branch(packed_addr_t *pc, zinstruction_t *instruction, zwor
                     break;
             }
             break;
+		case COUNT_EXT:
+			switch (instruction->opcode) {
+				case SAVE_TABLE:
+				case RESTORE_TABLE:
+				case LOG_SHIFT:
+				case ART_SHIFT:
+				case SET_FONT:
+				case SAVE_UNDO:
+				case RESTORE_UNDO:
+				case CHECK_UNICODE:
+					decode_store_op(pc, instruction, store);
+					break;
+				default:
+					break;
+			}
+			break;
     }
 }
 
@@ -439,6 +456,9 @@ void print_zinstruction(packed_addr_t instructionPC, zinstruction_t *instruction
                 default: print_operand_list(operands); break;
             }
             break;
+	    case COUNT_EXT:
+            print_operand_list(operands);
+			break;
     }
     
     if (instruction->store_flag){
@@ -614,6 +634,19 @@ static char * opcode_name(char *buf, zbyte_t opcount, zbyte_t opcode) {
 				default: strcpy(buf, "UNKNOWN"); break;
             }
             break;
+		case COUNT_EXT:
+			switch (opcode) {
+                case SAVE_TABLE: strcpy(buf, "SAVE_TABLE"); break;
+                case RESTORE_TABLE: strcpy(buf, "RESTORE_TABLE"); break;
+                case LOG_SHIFT: strcpy(buf, "LOG_SHIFT"); break;
+                case ART_SHIFT: strcpy(buf, "ART_SHIFT"); break;
+                case SET_FONT: strcpy(buf, "SET_FONT"); break;
+                case SAVE_UNDO: strcpy(buf, "SAVE_UNDO"); break;
+                case RESTORE_UNDO: strcpy(buf, "RESTORE_UNDO"); break;
+                case PRINT_UNICODE: strcpy(buf, "PRINT_UNICODE"); break;
+                case CHECK_UNICODE: strcpy(buf, "CHECK_UNICODE"); break;
+				default: strcpy(buf, "UNKNOWN"); break;
+			}
         default:
             strcpy(buf, "UNKNOWN"); break;
     }
