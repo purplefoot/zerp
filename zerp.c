@@ -89,7 +89,7 @@ int zerp_run() {
         
         zPC += decode_instruction(zPC, &instruction, operands, &store_operand, &branch_operand);
 
-        print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
+        // print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
         // if (zPC == 0x5d00)
         	        // debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
 
@@ -420,7 +420,7 @@ int zerp_run() {
                     case SET_WINDOW:
 						break;
 					case CALL_VS2:
-						unimplemented("CALL_VS2");
+						call_zroutine(unpack(get_operand(0)), &operands[1], store_operand, TRUE);
 						break;
 					case ERASE_WINDOW:
 					case ERASE_LINE:
@@ -445,7 +445,7 @@ int zerp_run() {
 						call_zroutine(unpack(get_operand(0)), &operands[1], store_operand, FALSE);
 						break;
 					case CALL_VN2:
-						unimplemented("CALL_VN2")
+						call_zroutine(unpack(get_operand(0)), &operands[1], store_operand, FALSE);
 						break;
 					case TOKENISE:
 						unimplemented("TOKENISE")
