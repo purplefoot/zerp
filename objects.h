@@ -3,19 +3,35 @@
     objects.h : object functions
 */
 
-typedef struct zobject {
+#define byte_swap(word) (((word & 0xff) << 8) | ((word & 0xff00) >> 8))
+
+typedef struct zobject_v3 {
     zbyte_t attributes[4];
     zbyte_t parent;
     zbyte_t sibling;
     zbyte_t child;
     zbyte_t properties[2];
-} zobject_t;
+} zobject_v3_t;
+
+typedef struct zobject_v4 {
+    zbyte_t attributes[6];
+    zword_t parent;
+    zword_t sibling;
+    zword_t child;
+    zbyte_t properties[2];
+} zobject_v4_t;
 
 #define V3_PROP_SIZE 5
+#define V4_PROP_SIZE 5
 #define V3_PROP_NUM 0x1f
+#define V4_PROP_NUM 0x3f
+#define V4_PROP_LEN_MASK 0x80
+#define V4_SHORT_PROP_MASK 0x40
 
+/*
 zobject_t *get_object(int number);
 zword_t object_property_table(int number);
+*/
 int object_in(int object, int parent);
 int object_parent(int object);
 int object_sibling(int object);

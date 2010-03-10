@@ -225,7 +225,7 @@ static void debug_print_object(int number) {
     glk_printf("Object %d:\nName: \"", number);
     print_object_name(number);
     glk_put_string("\"\nAttributes: ");
-	for (i = 0; i < 32; i++) {
+	for (i = 0; i < (zGameVersion < Z_VERSION_4 ? 32 : 48); i++) {
 		if (get_attribute(number, i))
 			glk_printf("%d ", i);
 	} 

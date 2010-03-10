@@ -60,7 +60,7 @@ int zerp_run() {
     zPC = get_word(PC_INITIAL);
     zGlobals = get_word(GLOBALS);
     zProperties = get_word(OBJECT_TABLE);
-    zObjects = zProperties + 62;
+    zObjects = zProperties + (zGameVersion > Z_VERSION_3 ? 126 : 62);
 	zDictionaryHeader = get_word(DICTIONARY);
 	zDictionary = zDictionaryHeader + 4 + get_byte(zDictionaryHeader);
 	switch (zGameVersion) {
