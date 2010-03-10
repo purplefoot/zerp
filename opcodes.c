@@ -47,7 +47,7 @@ int decode_instruction(packed_addr_t pc, zinstruction_t *instruction, zoperand_t
         instruction->form = OP_VARIABLE;
         instruction->count = (instruction->bytes >> 5) & 0x01 ? COUNT_VAR : COUNT_2OP;
         instruction->opcode = instruction->bytes & OPCODE_5BIT;
-        decode_variable(&pc, instruction, get_byte(pc++), operands);   
+        decode_variable(&pc, instruction, get_byte(pc++), operands);
     } else if (instruction->bytes >> 6 == OP_SHORT) {
         /*
             4.3.1
@@ -85,24 +85,38 @@ int decode_instruction(packed_addr_t pc, zinstruction_t *instruction, zoperand_t
     fields: bits 6 and 7 are the first field, bits 0 and 1 the fourth. The values are operand types
     as above. Once one type has been given as 'omitted', all subsequent ones must be. Example: 
     $$00101111 means large constant followed by variable (and no third or fourth opcode).
+
+	4.4.3.1
+	In the special case of the "double variable" VAR opcodes call_vs2 and call_vn2 (opcode numbers
+	12 and 26), a second byte of types is given, containing the types for the next four operands.
 */
 inline static int decode_variable(packed_addr_t *pc, zinstruction_t* instruction, zbyte_t optypes, zoperand_t *operands) {
-    int shift = 6, opcount = 0, optype;
-    
+    int shift, opcount = 0, optype, type_zbytes = 1;
+	zbyte_t types[2];
+	zbyte_t *types_ptr;
+
     instruction->bytes = instruction->bytes << 8 | optypes;
-    while (shift >= 0 && (optype = (optypes >> shift) & 0x3) != 0x3) {
-        operands->type = optype;
-        if (optype == LARGE_CONST) {
-            (operands++)->bytes = get_word((*pc)++);
-            (*pc)++;
-        } else {
-            (operands++)->bytes = (zword_t) get_byte((*pc)++);            
-        }
-        shift = shift - 2; opcount++;
-    }
+	types[0] = optypes; types_ptr = &types[0];
+	if (instruction->count == COUNT_VAR && (instruction->opcode == CALL_VN2 || instruction->opcode == CALL_VS2)) {
+		types[1] = get_byte((*pc)++);
+		type_zbytes = 2;
+	}
+	while (type_zbytes--) {
+		shift = 6;
+	    while (shift >= 0 && (optype = (*types_ptr >> shift) & 0x3) != 0x3) {
+	        operands->type = optype;
+	        if (optype == LARGE_CONST) {
+	            (operands++)->bytes = get_word((*pc)++);
+	            (*pc)++;
+	        } else {
+	            (operands++)->bytes = (zword_t) get_byte((*pc)++);
+	        }
+	        shift = shift - 2; opcount++;
+	    }
+		types_ptr++;
+	}
     /* tag the end of the operand list with NONE type */
-    if (opcount < 8)
-        operands->type = NONE;
+	operands->type = NONE;
 
     return opcount;
 }

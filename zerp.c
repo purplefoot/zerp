@@ -38,7 +38,7 @@ static int test_je(zword_t value, zoperand_t *operands);
 /* main interpreter entrypoint */
 int zerp_run() {
     zinstruction_t instruction;
-    zoperand_t operands[8];
+    zoperand_t operands[9]; /* 9th op will hold the end of list marker for 8 op opcodes */
     zbranch_t branch_operand;
     zword_t store_operand, scratch1, scratch2, scratch3, scratch4;
     int running;
@@ -89,7 +89,7 @@ int zerp_run() {
         
         zPC += decode_instruction(zPC, &instruction, operands, &store_operand, &branch_operand);
 
-        // print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
+        print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
         // if (zPC == 0x5d00)
         	        // debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
 
