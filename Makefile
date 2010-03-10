@@ -41,12 +41,18 @@ $(OBJS): $(HEADERS)
 
 test: test/unittests.z3 test_int
 
+test5: test/unittests.z5 test_int
+
 ftest:
 	frotz test/unittests.z3
-	
+
 test/unittests.z3: test_int test/unittests.inf
 	inform -v3 -t test/unittests.inf test/unittests.z3
-	test/czerp test/unittests.z3
+	cd test && ./czerp unittests.z3 && cd ..
+
+test/unittests.z5: test_int test/unittests.inf
+	inform -v5 -t test/unittests.inf test/unittests.z5
+	cd test && ./czerp unittests.z5 && cd ..
 
 test_int: czerp
 	mv czerp test/
