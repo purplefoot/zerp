@@ -45,7 +45,6 @@ void glk_main(void)
     if (!mainwin) {
         return; 
     }
-    statuswin = glk_window_open(mainwin, winmethod_Above | winmethod_Fixed, 1, wintype_TextGrid, 0);
 
     glk_set_window(mainwin);
 
@@ -84,11 +83,16 @@ void glk_main(void)
 
     
     // show_banner();
-		zGameVersion = get_byte(0);
+	zGameVersion = get_byte(0);
     if (!(zGameVersion >= Z_VERSION_3 && zGameVersion <= Z_VERSION_5)) {
         glk_printf("Unsupported version: this file needs version %d.", zGameVersion);
         return;
     }
+
+	/* Provide status line for V3 */
+	if (zGameVersion < Z_VERSION_4)
+		statuswin = glk_window_open(mainwin, winmethod_Above | winmethod_Fixed, 1, wintype_TextGrid, 0);
+
     zerp_run();
     
     free(zMachine);
