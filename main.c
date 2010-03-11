@@ -31,9 +31,10 @@ int zGameVersion = 0;
 unsigned char * zGamefile;
 unsigned char * zMachine;
 
-/* The story and status windows. */
+/* The story, upper and status windows. */
 winid_t mainwin = NULL;
 winid_t statuswin = NULL;
+winid_t upperwin = NULL;
 
 void glk_main(void)
 {
@@ -97,8 +98,10 @@ void glk_main(void)
     }
 
 	/* Provide status line for V3 */
-	if (zGameVersion < Z_VERSION_4)
+	if (zGameVersion < Z_VERSION_4) {
 		statuswin = glk_window_open(mainwin, winmethod_Above | winmethod_Fixed, 1, wintype_TextGrid, 0);
+		set_screen_width(statuswin);
+	}
 
     zerp_run();
     
@@ -158,6 +161,16 @@ void show_status_line() {
 
 	return;
 }
+
+
+/* Note the screen size (this is usually the size of a textgrid window) */
+void set_screen_width(winid_t win) {
+	int columns, lines;
+
+	glk_window_get_size(win, &columns, &lines);
+	store_byte(SCREEN_WIDTH, columns);
+}
+
 int glk_printf(char *format, ...) {
     va_list ap;
     char    buf[SMALLBUFF];

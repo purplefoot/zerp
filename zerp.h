@@ -141,11 +141,13 @@ int zerp_run();
 void show_status_line();
 void fatal_error(char *message);
 int glk_printf(char *format, ...);
+void set_screen_width(winid_t win);
 static void set_header_flags();
 
-/* The story and status windows. */
+/* The story, upper and status windows. */
 extern winid_t mainwin;
 extern winid_t statuswin;
+extern winid_t upperwin;
 
 /* Some large macros to keep opcode stuff in line in the main loop */
 #define get_operand(opnum) (operands[opnum].type == VARIABLE ? variable_get(operands[opnum].bytes) : operands[opnum].bytes)
