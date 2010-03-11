@@ -127,9 +127,13 @@ extern packed_addr_t instructionPC;
 #define HEADER_EXT_TAB      0x36
 
 /* We attempt to support version 3 - 8 games (but not 6)*/
+#define Z_VERSION_1			0x01
+#define Z_VERSION_2			0x02
 #define Z_VERSION_3			0x03
 #define Z_VERSION_4			0x04
 #define Z_VERSION_5			0x05
+#define Z_VERSION_6			0x06
+#define Z_VERSION_7			0x07
 #define Z_VERSION_8			0x08
 
 /* function declarations */

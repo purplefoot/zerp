@@ -84,9 +84,16 @@ void glk_main(void)
     
     // show_banner();
 	zGameVersion = get_byte(0);
-    if (!(zGameVersion >= Z_VERSION_3 && zGameVersion <= Z_VERSION_5)) {
-        glk_printf("Unsupported version: this file needs version %d.", zGameVersion);
-        return;
+    switch (zGameVersion) {
+			case Z_VERSION_1:
+			case Z_VERSION_2:
+			case Z_VERSION_6:
+			case Z_VERSION_7:
+		        glk_printf("Unsupported version: this file needs version %d.", zGameVersion);
+		        return;
+				break;
+			default:
+				break;
     }
 
 	/* Provide status line for V3 */
