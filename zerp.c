@@ -381,6 +381,7 @@ int zerp_run() {
                         put_property(get_operand(0), get_operand(1), get_operand(2));
                         break;
                     case SREAD:
+						/* TODO: Timed input */
 						if (zGameVersion <= Z_VERSION_4) {
 							show_status_line();
 	                        read(get_operand(0), get_operand(1));
@@ -433,7 +434,8 @@ int zerp_run() {
                     case SOUND_EFFECT:
                         break;
 					case READ_CHAR:
-						unimplemented("READ_CHAR")
+						/* TODO: Timed input */
+						store_op(read_char(1))
 						break;
 					case SCAN_TABLE:
 						unimplemented("SCAN_TABLE")

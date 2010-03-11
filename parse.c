@@ -55,6 +55,22 @@ zword_t read(zword_t input_buffer, zword_t parse_buffer) {
 	store_byte(parse_buffer + 1, tokenise(input_buffer, parse_buffer));
 }
 
+zbyte_t read_char(zword_t device) {
+	int gotchar;
+	event_t ev;
+
+
+	glk_request_char_event(mainwin);
+    gotchar = FALSE;
+    while (!gotchar) {
+        glk_select(&ev);
+        if (ev.type == evtype_CharInput)
+            gotchar = TRUE;
+    }
+
+	return ev.val1;
+}
+
 int tokenise(zword_t text, zword_t parse_buffer) {
 	zword_t token_start, current, input_size, buf_start, word_seps, max_entries, dict_address, pbufftmp;
 	zbyte_t max_tokens, total_seps, tokens_total;
