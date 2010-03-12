@@ -481,7 +481,14 @@ int zerp_run() {
 						store_op(read_char(1))
 						break;
 					case SCAN_TABLE:
-						unimplemented("SCAN_TABLE")
+						if (operands[3].type == NONE) {
+							scratch1 = 0x82; /* compare words, 2 byte table entries is the default */
+						} else {
+							scratch1 = get_operand(3);
+						}
+						scratch2 = scan_table(get_operand(0), get_operand(1), get_operand(2), scratch1);
+						store_op(scratch2);
+						branch_op(scratch2 != 0);
 						break;
 					case NOT_V5:
 						unimplemented("NOT_V5")
@@ -559,6 +566,30 @@ static int test_je(zword_t value, zoperand_t *operands) {
         
     return result;
 }
+
+static zword_t scan_table(zword_t item, zword_t table, zword_t length, zbyte_t form) {
+	int i;
+	zword_t address;
+
+	address = 0;
+	for (i = 0; i < length; i++) {
+		if (form & 0x80) {
+			if (get_word(table) == item) {
+				address = table;
+				break;
+			}
+		} else {
+			if (get_byte(table) == item) {
+				address = table;
+				break;
+			}
+		}
+		table += (form & 0x7f);
+	}
+
+	return address;
+}
+
 
 static void set_header_flags() {
     store_byte(TERP_NUMBER, 3);

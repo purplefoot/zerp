@@ -21,6 +21,7 @@ Global g02 = 0;
     call_vars();
     check_inc_dec();
 	objects();
+	table_tests();
     @quit;
 ];
 
@@ -497,4 +498,47 @@ Object cup "china cup" table;
 .fail;
     print "fail^";
     rfalse;
+];
+
+Array words_table--> $1001 $2002 $3003 $4004 $5005 $6006 $7007 $8008 $9009 $a00a
+					  $b00b $c00c $d00d $e00e $f00f $1101 $1202 $1303 $1404 $1505
+					  $1606 $1707 $1808 $1909 $1a0a $1b0b $1c0c $1d0d $1e0e $1f0f;
+Array bytes_table-> $01 $02 $03 $04 $05 $06 $07 $08 $09 $0a $0b $0c $0d $0e $0f
+					 $10 $11 $12 $13 $14 $15 $16 $17 $18 $19 $1a $1b $1c $1d $1e $1f;
+
+[table_tests expect found;
+	print "Testing tables...^";
+	print "Scanning words...";
+	expect = words_table + 12 * 2;found = 0;
+	@scan_table $d00d words_table 30 found ?~fail;
+	@je expect found ?~fail;found = 0;
+	@scan_table $ffff words_table 30 found ?fail;
+	@jz found ?~fail;found = 0;
+	@scan_table $1101 words_table 15 found ?fail;
+	@jz found ?~fail;
+	print "ok^Scanning bytes...";
+	expect = bytes_table + 14;found = 0;
+	@scan_table $0f bytes_table $1f $01 found ?~fail;
+	@je expect found ?~fail;found = 0;
+	@scan_table $ee bytes_table $1f $01 found ?fail;
+	@jz found ?~fail;found = 0;
+	@scan_table $10 bytes_table $0f $01 found ?fail;
+	@jz found ?~fail;found = 0;
+	print "ok^Scanning word records...";
+	expect = words_table + 16 * 2;
+	@scan_table $1202 words_table 7 $88 found ?~fail;
+	@je expect found ?~fail;found = 0;
+	@scan_table $c00c words_table 7 $88 found ?fail;
+	print "ok^Scanning byte records...";
+	expect = bytes_table + 20;found = 0;
+	@scan_table $15 bytes_table 7 $04 found ?~fail;
+	@je expect found ?~fail;found = 0;
+	@scan_table $12 bytes_table 7 $04 found ?fail;
+	print "ok^";
+	rtrue;
+.fail;
+	print " expected: ", expect, ", found ", found, " ";
+    print "fail^";
+    rfalse;
+
 ];

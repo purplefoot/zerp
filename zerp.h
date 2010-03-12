@@ -143,6 +143,7 @@ void fatal_error(char *message);
 int glk_printf(char *format, ...);
 void set_screen_width(winid_t win);
 static void set_header_flags();
+static zword_t scan_table(zword_t item, zword_t table, zword_t length, zbyte_t form);
 
 /* The story, upper and status windows. */
 extern winid_t mainwin;
