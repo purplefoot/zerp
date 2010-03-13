@@ -42,6 +42,9 @@ void glk_main(void)
     struct stat  info;
     char         errbuff[SMALLBUFF];
   
+
+	/* TODO: Put the window init code somewhere else */
+	glk_stylehint_set(wintype_TextGrid, style_Alert, stylehint_ReverseColor, 1);
     mainwin = glk_window_open(0, 0, 0, wintype_TextBuffer, 1);
     if (!mainwin) {
         return; 
@@ -127,7 +130,7 @@ static void show_banner() {
 void show_status_line() {
 	glui32 width, height;
 	zbyte_t room_object;
-	int len;
+	int len, i;
 	char ampm[3], score[16];
 
     if (!statuswin)
@@ -135,9 +138,12 @@ void show_status_line() {
 
     glk_set_window(statuswin);
     glk_window_clear(statuswin);
-	glk_set_style(style_Header);
+	glk_set_style(style_Alert);
 
     glk_window_get_size(statuswin, &width, &height);
+	for (i = 0; i < width; i++)
+		glk_put_string(" ");
+	glk_window_move_cursor(statuswin, 0, 0);
 
 	if (room_object = variable_get(0x10));
 		print_object_name(room_object);
