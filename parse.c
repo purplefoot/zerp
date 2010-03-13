@@ -96,7 +96,7 @@ int tokenise(zword_t text, zword_t parse_buffer) {
 				buf_start = token_start;
 				while (buf_start < current)
 					token[char_count++] = get_byte(buf_start++);
-				encode_zstring(token, char_count, zstring, DICT_RESOLUTION_V3);
+				encode_zstring(token, char_count, zstring, (zGameVersion < Z_VERSION_4 ? DICT_RESOLUTION_V3 : DICT_RESOLUTION_V4));
 				dict_address = lookup_entry(zstring);
 				store_word(parse_buffer, dict_address);
 				parse_buffer += 2;
@@ -107,7 +107,7 @@ int tokenise(zword_t text, zword_t parse_buffer) {
 					break;
 				if (sep_found) {
 					token[0] = get_byte(current++);
-					encode_zstring(token, 1, zstring, DICT_RESOLUTION_V3);
+					encode_zstring(token, 1, zstring, (zGameVersion < Z_VERSION_4 ? DICT_RESOLUTION_V3 : DICT_RESOLUTION_V4));
 					dict_address = lookup_entry(zstring);
 					store_word(parse_buffer, dict_address);
 					parse_buffer += 2;
@@ -128,7 +128,7 @@ int tokenise(zword_t text, zword_t parse_buffer) {
 		}
 		if (sep_found) {
 			token[0] = get_byte(current++);
-			encode_zstring(token, 1, zstring, DICT_RESOLUTION_V3);
+			encode_zstring(token, 1, zstring, (zGameVersion < Z_VERSION_4 ? DICT_RESOLUTION_V3 : DICT_RESOLUTION_V4));
 			dict_address = lookup_entry(zstring);
 			store_word(parse_buffer, dict_address);
 			parse_buffer += 2;
