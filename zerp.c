@@ -471,6 +471,22 @@ int zerp_run() {
 						break;
 					case GET_CURSOR:
 					case SET_TEXT_STYLE:
+						scratch1 = get_operand(0);
+						if (!scratch1) {
+							glk_set_style(style_Normal);
+							break;
+						}
+						scratch2 = 0;
+						if (scratch1 & 1)
+							scratch2 |= style_Alert;
+						if (scratch1 & 2)
+							scratch2 |= style_Emphasized;
+						if (scratch1 & 4)
+							scratch2 |= style_Emphasized;
+						if (scratch1 & 8)
+							scratch2 |= style_Preformatted;
+						glk_set_style(scratch2);
+						break;
 					case BUFFER_MODE:
                     case OUTPUT_STREAM:
                     case INPUT_STREAM:
@@ -596,6 +612,6 @@ static void set_header_flags() {
     store_byte(TERP_VERSION, '0');
 
 	/* FIXME: quick hack - fake a 80x24 screen for Infocom later games, we will update when we open a textgrid window */
-	store_byte(SCREEN_WIDTH, 80);
 	store_byte(SCREEN_HEIGHT, 24);
+	set_screen_width(mainwin);
 }
