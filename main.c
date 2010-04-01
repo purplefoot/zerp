@@ -173,6 +173,9 @@ void show_status_line() {
 void set_screen_width(winid_t win) {
 	int columns, lines;
 
+	if (!win)
+		return;
+
 	glk_window_get_size(win, &columns, &lines);
 	store_byte(SCREEN_WIDTH, columns);
 }
