@@ -7,7 +7,7 @@
 #define DICT_RESOLUTION_V4		3
 
 zword_t read(zword_t input_buffer, zword_t parse_buffer);
-int tokenise(zword_t text, zword_t parse_buffer);
+void tokenise(zword_t text, zword_t parse_buffer, zword_t dictionary, zword_t flag);
 int check_separator(zword_t separators, zbyte_t total, zbyte_t value);
 void encode_zstring(char *token_buffer, int buf_len, zword_t *zstring, int zstring_len);
 zword_t lookup_entry(zword_t *zstring);

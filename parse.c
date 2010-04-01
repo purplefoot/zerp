@@ -44,15 +44,32 @@ zword_t read(zword_t input_buffer, zword_t parse_buffer) {
     for (cx = buffer + len - 1; cx >= cmd && *cx == ' '; cx--) { };
     *(cx+1) = '\0';
 
-	input_ptr = input_buffer + 1; len = 0;
+	if (zGameVersion < Z_VERSION_5) {
+		input_ptr = input_buffer + 1;
+		len = 0;
+	} else {
+		if (len = get_byte(input_buffer + 1)) {
+			input_ptr = input_buffer + 2 + get_byte(input_buffer + 1);	
+		} else {
+			input_ptr = input_buffer + 2;				
+		}
+	}
+	
 	while (*cmd != '\0') {
 		store_byte(input_ptr++, *cmd++);
 		len++;		
 	}
 	
-	store_byte(input_ptr, '\0');
+	if (zGameVersion < Z_VERSION_5) {
+		store_byte(input_ptr, '\0');		
+	} else {
+		store_byte(input_buffer + 1, len);
+	}
 	
-	store_byte(parse_buffer + 1, tokenise(input_buffer, parse_buffer));
+	if (zGameVersion < Z_VERSION_5 || parse_buffer)
+		tokenise(input_buffer, parse_buffer, 0, 0);
+	
+	return 0xa;
 }
 
 zbyte_t read_char(zword_t device) {
@@ -71,7 +88,7 @@ zbyte_t read_char(zword_t device) {
 	return ev.val1;
 }
 
-int tokenise(zword_t text, zword_t parse_buffer) {
+void tokenise(zword_t text, zword_t parse_buffer, zword_t dictionary, zword_t flag) {
 	zword_t token_start, current, input_size, buf_start, word_seps, max_entries, dict_address, pbufftmp;
 	zbyte_t max_tokens, total_seps, tokens_total;
 	char token[257];
@@ -81,14 +98,15 @@ int tokenise(zword_t text, zword_t parse_buffer) {
 	pbufftmp = parse_buffer;
 	max_tokens = get_byte(parse_buffer++);
 	parse_buffer++; /* space for total tokens found */
-	// input_size =  get_byte(text++);
+	if (zGameVersion > Z_VERSION_4)
+		input_size =  get_byte(++text);
 	total_seps = get_byte(zDictionaryHeader);
 	word_seps = zDictionaryHeader + 1;
 
 	done = FALSE; token_found = FALSE; sep_found = FALSE;
 	tokens_total = 0;
 	token_start = current = ++text;
-	while (token_found || get_byte(current) != '\0' || tokens_total >= max_tokens) {
+	while (token_found || get_byte(current) != '\0' || tokens_total >= max_tokens || (zGameVersion > Z_VERSION_4 && input_size-- > 0)) {
 		sep_found = check_separator(word_seps, total_seps, get_byte(current));
 		if (token_found) {
 			if (get_byte(current) == ' ' || get_byte(current) == '\0' || sep_found ) {
@@ -149,7 +167,8 @@ int tokenise(zword_t text, zword_t parse_buffer) {
 					get_byte(pbufftmp + (char_count *4) + 4));
 	}
 
-	return tokens_total;
+	store_byte(pbufftmp + 1, tokens_total);
+	return;
 }
 
 int check_separator(zword_t separators, zbyte_t total, zbyte_t value) {
