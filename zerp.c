@@ -76,7 +76,7 @@ int zerp_run() {
 	}
     set_header_flags();
 
-    running = TRUE;
+	running = TRUE;
     LOG(ZDEBUG,"Running...\n", 0);
     
     while (running) {
@@ -89,9 +89,10 @@ int zerp_run() {
         
         zPC += decode_instruction(zPC, &instruction, operands, &store_operand, &branch_operand);
 
-        // print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
-        // if (zPC == 0x5d00)
-        	        // debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
+       // if (zPC >= 0xb2d5 && zPC <= 0xb31c)
+       // 	       print_zinstruction(instructionPC, &instruction, operands, &store_operand, &branch_operand, 0);
+       // if (zPC >= 0xb2d5 && zPC <= 0xb31c)
+       //    	        debug_monitor(instructionPC, instruction, *operands, store_operand, branch_operand);
 
         switch (instruction.count) {
             case COUNT_2OP:
@@ -507,7 +508,7 @@ int zerp_run() {
 						branch_op(scratch2 != 0);
 						break;
 					case NOT_V5:
-						unimplemented("NOT_V5")
+                        store_op(~get_operand(0))
 						break;
 					case CALL_VN:
 						call_zroutine(unpack(get_operand(0)), &operands[1], store_operand, FALSE);
@@ -516,7 +517,7 @@ int zerp_run() {
 						call_zroutine(unpack(get_operand(0)), &operands[1], store_operand, FALSE);
 						break;
 					case TOKENISE:
-						unimplemented("TOKENISE")
+						tokenise(get_operand(0), get_operand(1), 0, 0);
 						break;
 					case ENCODE_TEXT:
 						unimplemented("ENCODE_TEXT")
@@ -548,10 +549,22 @@ int zerp_run() {
 						unimplemented("RESTORE_TABLE");
 						break;
 					case LOG_SHIFT:
-						unimplemented("LOG_SHIFT");
+						scratch1 = get_operand(0);
+						scratch2 = get_operand(1);
+						if ((signed short)scratch2 < 0) {
+							store_op(scratch1 >> -(signed)scratch2)
+						} else {
+							store_op(scratch1 << scratch2)						
+						}
 						break;
 					case ART_SHIFT:
-						unimplemented("ART_SHIFT");
+						scratch1 = get_operand(0);
+						scratch2 = get_operand(1);
+						if ((signed short)scratch2 < 0) {
+							store_op((signed short)scratch1 >> -(signed short)scratch2)
+						} else {
+							store_op(scratch1 << scratch2)
+						}
 						break;
 					case SET_FONT:
 					case SAVE_UNDO:
