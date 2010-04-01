@@ -4,6 +4,7 @@
 */
 
 #include <stdio.h>
+#include <string.h>
 #ifdef TARGET_OS_MAC
 #include <GlkClient/glk.h>
 #else
@@ -25,7 +26,7 @@ int stack_push(zword_t value) {
 zword_t stack_pop() {
     zword_t value;
 
-    if (zSP == zFP->sp) {
+    if (zSP < zFP->sp) {
         fatal_error("Value stack underflow!\n");
     }
     value =  *(zSP--);
@@ -68,6 +69,9 @@ zstack_frame_t * call_zroutine(packed_addr_t address, zoperand_t *operands, zbyt
     if (newFrame > zCallStackTop)
         fatal_error("Call stack overflow");
     
+	/* stack frames will be reused, so zero the new one out */
+	memset(newFrame, 0, sizeof(zstack_frame_t));
+
     newFrame->pc = zPC;
     newFrame->sp = zSP;
     newFrame->ret_store = ret_store;
@@ -76,16 +80,10 @@ zstack_frame_t * call_zroutine(packed_addr_t address, zoperand_t *operands, zbyt
 	local_count = get_byte(address++);
 	if (zGameVersion < Z_VERSION_5) {
 		/* defaults for locals stored after local count in V3/V4 */
-    for (i = 0; i < local_count; i++) {
-        newFrame->locals[i] = get_word(address);
-        address += 2;
-    }
-		while (i++ < 16)
-			newFrame->locals[i] = 0;
-	} else {
-		/* in V5 and above locals have no defaults and are zeroed */
-    for (i = 0; i < local_count; i++)
-			newFrame->locals[i] = 0;
+	    for (i = 0; i < local_count; i++) {
+	        newFrame->locals[i] = get_word(address);
+	        address += 2;
+	    }
 	}
    
 	i = 0;
@@ -109,7 +107,8 @@ zstack_frame_t *return_zroutine(zword_t ret_value) {
     if ((zFP - 1) < zCallStack)
         fatal_error("Call stack underflow");
     
-    LOG(ZDEBUG, "\nReturned %i into V%x (%05x)", ret_value, zFP->ret_store, zFP->pc)
+	if (zFP->ret_keep)
+	    LOG(ZDEBUG, "\nReturned %i into V%x (%05x)", ret_value, zFP->ret_store, zFP->pc)
 	LOG(ZDEBUG, "\nStack: returned, discarded %li outstanding items (stack top now #%hn, size %li, frame usage %li)",
 				zSP - zFP->sp, (zFP - 1)->sp, (zSP - (zFP - 1)->sp) - (zSP - zFP->sp),(zFP - 1) - zCallStack)
 

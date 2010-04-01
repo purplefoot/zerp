@@ -251,7 +251,7 @@ static void dump_stack() {
     int empty = TRUE;
     
     s = zSP;
-    while(s > zFP->sp) {
+    while(s >= zFP->sp) {
         glk_printf("%#08x : %04x\n", s, *s--);
         empty = FALSE;
     }
