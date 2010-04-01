@@ -15,9 +15,9 @@ typedef struct zobject_v3 {
 
 typedef struct zobject_v4 {
     zbyte_t attributes[6];
-    zword_t parent;
-    zword_t sibling;
-    zword_t child;
+    zbyte_t parent[2];
+    zbyte_t sibling[2];
+    zbyte_t child[2];
     zbyte_t properties[2];
 } zobject_v4_t;
 
@@ -27,6 +27,10 @@ typedef struct zobject_v4 {
 #define V4_PROP_NUM 0x3f
 #define V4_PROP_LEN_MASK 0x80
 #define V4_SHORT_PROP_MASK 0x40
+
+
+#define get_object_number_v4(obj_addr, node) ((zword_t)((obj_addr->node[0] << 8) | obj_addr->node[1]))
+#define set_object_number_v4(obj_addr, node, value) obj_addr->node[0] = (value & 0xff00) >> 8; obj_addr->node[1] = value & 0xff;
 
 /*
 zobject_t *get_object(int number);

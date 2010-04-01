@@ -217,7 +217,7 @@ int object_in(int object, int parent) {
 	if (zGameVersion < Z_VERSION_4) {
 	    return get_object_v3(object)->parent == parent;
 	} else {
-	    return byte_swap(get_object_v4(object)->parent) == parent;
+	    return get_object_number_v4(get_object_v4(object), parent) == parent;
 	}
 }
 
@@ -225,7 +225,7 @@ int object_parent(int object) {
 	if (zGameVersion < Z_VERSION_4) {
 	    return get_object_v3(object)->parent;
 	} else {
-	    return byte_swap(get_object_v4(object)->parent);
+	    return get_object_number_v4(get_object_v4(object), parent);
 	}
 }
 
@@ -233,7 +233,7 @@ int object_sibling(int object) {
 	if (zGameVersion < Z_VERSION_4) {
 	    return get_object_v3(object)->sibling;
 	} else {
-	    return byte_swap(get_object_v4(object)->sibling);
+	    return get_object_number_v4(get_object_v4(object), sibling);
 	}
 }
 
@@ -241,7 +241,7 @@ int object_child(int object) {
 	if (zGameVersion < Z_VERSION_4) {
 	    return get_object_v3(object)->child;
 	} else {
-	    return byte_swap(get_object_v4(object)->child);
+	    return get_object_number_v4(get_object_v4(object), child);
 	}
 }
 
@@ -270,19 +270,19 @@ int remove_object_v4(int object) {
 	zword_t prev_sibling;
 
     obj = get_object_v4(object);
-    obj_parent = get_object_v4(byte_swap(obj->parent));
+    obj_parent = get_object_v4(get_object_number_v4(obj, parent));
 
-    if (byte_swap(obj_parent->child) == object) {
-        obj_parent->child = byte_swap(obj->sibling);
+    if (get_object_number_v4(obj_parent, child) == object) {
+        set_object_number_v4(obj_parent, child, get_object_number_v4(obj, sibling));
     } else {
-        for (prev_sibling = byte_swap(obj_parent->child);
- 			 byte_swap(get_object_v4(prev_sibling)->sibling) != object;
- 			 prev_sibling = get_object_v4(prev_sibling)->sibling) ;
-        get_object_v4(prev_sibling)->sibling = obj->sibling;
+        for (prev_sibling = get_object_number_v4(obj_parent, child);
+ 			 get_object_number_v4(get_object_v4(prev_sibling), sibling) != object;
+ 			 prev_sibling = get_object_number_v4(get_object_v4(prev_sibling), sibling)) ;
+        set_object_number_v4(get_object_v4(prev_sibling), sibling, get_object_number_v4(obj, sibling));
     }
 
-    obj->parent = 0;
-	obj->sibling = 0;
+    set_object_number_v4(obj, parent, 0);
+	set_object_number_v4(obj, sibling, 0);
 
     return 0;
 }
@@ -317,12 +317,12 @@ int insert_object_v4(int object, int destination) {
     obj = get_object_v4(object);
     dest = get_object_v4(destination);
 
-    if (byte_swap(obj->parent) != 0)
+    if (get_object_number_v4(obj, parent) != 0)
         remove_object_v4(object);
 
-    obj->sibling = dest->child;
-    dest->child = byte_swap(object);
-    obj->parent = byte_swap(destination);
+    set_object_number_v4(obj, sibling, get_object_number_v4(dest, child));
+    set_object_number_v4(dest, child, object);
+    set_object_number_v4(obj, parent, destination);
 
     return destination;
 }
